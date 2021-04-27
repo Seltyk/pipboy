@@ -135,8 +135,14 @@ fn main() {
             // Get cache name from command line
             let subcommand_matches  = matches.subcommand_matches("cache").unwrap();
             let cache_name = subcommand_matches.value_of("name").expect("Error reading name of cache.");
+            // Ensure the file doesn't already exist
+            let cache_path = &format!("{}/{}.tar.gz", cache_directory, &format!("{}.tar.gz", cache_name));
+            if Path::new(&cache_path).exists() {
+                println!("Cache {} already exists!", &cache_name);
+                exit(1);
+            }
             // Tarball the directory contents
-            archives::create_tarball(&format!("{}/{}.tar.gz", cache_directory, &format!("{}.tar.gz", cache_name)), &current_profile_file.data_path).expect("Error caching Data directory. Do not install mods.");
+            archives::create_tarball(&cache_path, &current_profile_file.data_path).expect("Error caching Data directory. Do not install mods.");
         }
         _ => {
             println!("Command missing! Try with -h for more info.");
