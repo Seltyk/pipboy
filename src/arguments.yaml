@@ -6,7 +6,7 @@ args:
   - config:
       short: c
       help: Path to config file
-      default_value: "~/.pipboy.conf"
+      default_value: "~/.pipboy/config"
 subcommands:
     - cache:
         about: Cache current Fallout Data/ directory

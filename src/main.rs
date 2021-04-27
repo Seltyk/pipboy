@@ -15,15 +15,19 @@
 // You should have received a copy of the GNU General Public License
 // along with pipboy.  If not, see <http://www.gnu.org/licenses/>.
 
+mod config_file;
+
 #[macro_use]
 extern crate clap;
 use clap::App;
 use std::process::exit;
 use std::env;
 use substring::Substring;
+use std::fs;
+use std::path::Path;
 
 fn resolve_home_dir(path: &str) -> String {
-    if path.substring(0, 1) == "~" {
+    if path == "~" || path.substring(0, 2) == "~/" {
         // Get the home directory from environment variables
         let home_directory = env::var("HOME").expect("HOME is undefined in environment variables");
         let result = str::replace(path, "~", &home_directory);
@@ -41,9 +45,10 @@ fn main() {
     let config_path = resolve_home_dir(
         matches.value_of("config").expect("Failed to read config path argument")
     );
-    // Create config file if it doesn't exist
-    
-
+    // Create path for config if it doesn't exist
+    fs::create_dir_all(Path::new(&config_path).parent().expect("How did you even get here"));
+    // Load configuration file
+    let config = config_file::load_config_file(&config_path);
 
     // Execute the given subcommand
     match matches.subcommand_name() {
