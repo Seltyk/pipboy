@@ -18,7 +18,6 @@
 use std::error::Error;
 use confy;
 use serde::{Serialize, Deserialize};
-use std::clone::Clone;
 
 #[derive(Serialize, Deserialize)]
 pub(crate) struct ProfileFile {
