@@ -42,21 +42,29 @@ fn main() {
     let yaml = load_yaml!("arguments.yaml");
     let matches = App::from_yaml(yaml).get_matches();
     // Get config path
-    let config_path = resolve_home_dir(
+    let config_file_path = resolve_home_dir(
         matches.value_of("config").expect("Failed to read config path argument")
     );
+    let config_path = Path::new(&config_file_path).parent().expect("This error shouldn't be possible.");
     // Create path for config if it doesn't exist
-    fs::create_dir_all(Path::new(&config_path).parent().expect("How did you even get here"));
+    fs::create_dir_all(config_path).expect("Failed to create path to configuration directory.");
     // Load configuration file
-    let config_file = match config_file::load_config_file(config_file_path) {
+    let config_file = match config_file::load_config_file(&config_file_path) {
         Ok(config_file) => config_file,
         Err(e) => panic!("Failed to load configuration file: {}", e),
     };
-
     // Execute the given subcommand
     match matches.subcommand_name() {
         Some("cache") => {
-            println!("{}", config_path);
+            println!("{}", config_file.data_path)
+        }
+        Some("config") => {
+            // Implement this later
+            exit(1);
+        }
+        Some("profile") => {
+            // Implement this later
+            exit(1);
         }
         _ => {
             println!("Command missing! Try with -h for more info.");

@@ -18,14 +18,17 @@
 use std::error::Error;
 use confy;
 use serde::{Serialize, Deserialize};
+
 #[derive(Serialize, Deserialize)]
 pub(crate) struct ConfigFile {
     pub(crate) data_path: String,
+    pub(crate) current_profile: String,
 }
 /// `ConfigFile` implements `Default`
 impl std::default::Default for ConfigFile {
     fn default() -> Self { Self {
         data_path: "Path to Fallout NV Data/".into(),
+        current_profile: "Fallout New Vegas".into(),
     }}
 }
 /// Returns a ConfigFile from a given path
