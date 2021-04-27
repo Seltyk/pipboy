@@ -62,13 +62,6 @@ fn main() {
     let current_profile_file = profile::load_profile_file(&current_profile_file_path).expect("Failed to load current profile!");
     // Execute the given subcommand
     match matches.subcommand_name() {
-        Some("cache") => {
-            println!("{}", current_profile_file.data_path);
-        }
-        Some("config") => {
-            // Implement this later
-            exit(1);
-        }
         Some("profile") => {
             // Check the given subcommand
             let subcommand_matches = matches.subcommand_matches("profile").unwrap();
@@ -98,7 +91,7 @@ fn main() {
                     let subsubcommand_matches = subcommand_matches.subcommand_matches("select").unwrap();
                     let new_profile_name = subsubcommand_matches.value_of("name").expect("Error reading name of selected profile.");
                     // Test that the new profile exists
-                    if !Path::new(format!("{}/{}", profiles_path, new_profile_name)).exists() {
+                    if !Path::new(&format!("{}/{}", profiles_path, new_profile_name)).exists() {
                         println!("Profile {} does not exist!", new_profile_name);
                         exit(1);
                     } else {
@@ -117,7 +110,7 @@ fn main() {
                         exit(1);
                     } else {
                         // The profile is not currently in use
-                        fs::remove_file(format!("{}/{}", profiles_path, target_profile_name)).expect(format!("Error removing profile {}", target_profile_name));
+                        fs::remove_file(format!("{}/{}", profiles_path, target_profile_name)).expect(&format!("Error removing profile {}", target_profile_name));
                     }
 
                 }
@@ -126,6 +119,9 @@ fn main() {
                     exit(1);
                 }
             }
+        }
+        Some("cache") => {
+            println!("{}", current_profile_file.data_path);
         }
         _ => {
             println!("Command missing! Try with -h for more info.");
