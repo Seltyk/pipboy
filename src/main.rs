@@ -78,7 +78,14 @@ fn main() {
                     let paths = fs::read_dir(profiles_path).unwrap();
                     println!("Available profiles:");
                     for path in paths {
-                        println!("Profile: {:?}", path.unwrap().file_name());
+                        let file_name = path.unwrap().file_name();
+                        print!("Profile: {:?}", file_name);
+                        // Display an indicator next to the current profile
+                        if file_name.to_str().unwrap() == &config_file.current_profile {
+                            print!(" [*]\n");
+                        } else {
+                            print!("\n");
+                        }
                     }
                 }
                 Some("create") => {
@@ -86,6 +93,27 @@ fn main() {
                     let new_profile_name = subsubcommand_matches.value_of("name").expect("Error reading name of new profile.");
                     let _new_profile = profile::load_profile_file(&format!("{}/{}", profiles_path, new_profile_name));
                     println!("Created profile {}", new_profile_name);
+                }
+                Some("select") => {
+                    let subsubcommand_matches = subcommand_matches.subcommand_matches("select").unwrap();
+                    let new_profile_name = subsubcommand_matches.value_of("name").expect("Error reading name of selected profile.");
+                    config_file.current_profile = new_profile_name.to_string();
+                    confy::store_path(config_file_path, config_file).expect("Error saving configuration file!");
+                    println!("Switched to profile {}", new_profile_name);
+                }
+                Some("remove") | Some("rm") => {
+                    let subsubcommand_matches = subcommand_matches.subcommand_matches("select").unwrap();
+                    let target_profile_name = subsubcommand_matches.value_of("name").expect("Error reading name of selected profile.");
+                    // Ensure the user is not trying to remove their current profile
+                    if target_profile_name == config_file.current_profile {
+                        // The profile is currently in use
+                        println!("Cannot remove current profile!");
+                        exit(1);
+                    } else {
+                        // The profile is not currently in use
+                        fs::remove_file(format!("{}/{}", profiles_path, target_profile_name)).expect(format!("Error removing profile {}", target_profile_name));
+                    }
+
                 }
                 _ => {
                     println!("Command missing! Try with -h for more info.");

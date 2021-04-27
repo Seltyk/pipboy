@@ -15,14 +15,24 @@ subcommands:
           - list:
               about: List all profiles
           - ls:
-              about: List all profiles
+              about: Alias of list
           - select:
               about: Select a profile
               args:
-                - profile:
+                - name:
                     help: Profile to switch to
           - create:
               about: Create a new profile
               args:
                 - name:
                     help: Name of the new profile
+          - remove:
+              about: Remove a profile
+              args:
+                - name:
+                    help: The profile to remove
+          - rm:
+              about: Alias of remove
+              args:
+                - name:
+                    help: The profile to remove
