@@ -15,3 +15,27 @@
 // You should have received a copy of the GNU General Public License
 // along with pipboy.  If not, see <http://www.gnu.org/licenses/>.
 
+use std::error::Error;
+use confy;
+use serde::{Serialize, Deserialize};
+use std::clone::Clone;
+
+#[derive(Serialize, Deserialize)]
+pub(crate) struct ProfileFile {
+    pub(crate) data_path: String,
+    pub(crate) enabled_mods: String,
+}
+/// `ProfileFile` implements `Default`
+impl std::default::Default for ProfileFile {
+    fn default() -> Self { Self {
+        data_path: "path/to/fallout/Data/".into(),
+        enabled_mods: "".into(),
+    }}
+}
+
+pub(crate) fn load_profile_file(profile_path: &str) -> Result<ProfileFile, Box<dyn Error>> {
+    // Parse JSON from file
+    let profile:ProfileFile = confy::load_path(profile_path)?;
+    // Return config
+    Ok(profile)
+}

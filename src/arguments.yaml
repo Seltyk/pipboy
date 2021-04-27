@@ -5,9 +5,24 @@ about: A Mod Manager for Fallout New Vegas
 args:
   - config:
       short: c
-      help: Path to config file
-      default_value: "~/.pipboy/config"
+      help: Path to config directory
+      default_value: "~/.pipboy"
 subcommands:
     - cache:
         about: Cache current Fallout Data/ directory
-        
+    - profile:
+        subcommands:
+          - list:
+              about: List all profiles
+          - ls:
+              about: List all profiles
+          - select:
+              about: Select a profile
+              args:
+                - profile:
+                    help: Profile to switch to
+          - create:
+              about: Create a new profile
+              args:
+                - name:
+                    help: Name of the new profile
