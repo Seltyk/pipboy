@@ -10,6 +10,10 @@ args:
 subcommands:
     - cache:
         about: Cache current Fallout Data/ directory
+        args:
+          - name:
+              required: true
+              help: Name of cache file
     - profile:
         subcommands:
           - list:
@@ -20,19 +24,23 @@ subcommands:
               about: Select a profile
               args:
                 - name:
+                    required: true
                     help: Profile to switch to
           - create:
               about: Create a new profile
               args:
                 - name:
+                    required: true
                     help: Name of the new profile
           - remove:
               about: Remove a profile
               args:
                 - name:
+                    required: true
                     help: The profile to remove
           - rm:
               about: Alias of remove
               args:
                 - name:
+                    required: true
                     help: The profile to remove

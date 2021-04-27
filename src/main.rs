@@ -17,6 +17,7 @@
 
 mod config_file;
 mod profile;
+mod archives;
 
 #[macro_use]
 extern crate clap;
@@ -127,11 +128,15 @@ fn main() {
                 exit(1);
             }
             // Create cache folder if necessary
-            let cache_directory = format!("{}/caches/", &config_path);
+            let cache_directory = format!("{}/caches/{}/", &config_path, config_file.current_profile);
             if !Path::new(&cache_directory).exists() {
                 fs::create_dir_all(&cache_directory).expect(&format!("Error creating {}", &cache_directory));
-
             }
+            // Get cache name from command line
+            let subcommand_matches  = matches.subcommand_matches("cache").unwrap();
+            let cache_name = subcommand_matches.value_of("name").expect("Error reading name of cache.");
+            // Tarball the directory contents
+            archives::create_tarball(&format!("{}/{}.tar.gz", cache_directory, &format!("{}.tar.gz", cache_name)), &current_profile_file.data_path).expect("Error caching Data directory. Do not install mods.");
         }
         _ => {
             println!("Command missing! Try with -h for more info.");
