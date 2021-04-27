@@ -97,9 +97,15 @@ fn main() {
                 Some("select") => {
                     let subsubcommand_matches = subcommand_matches.subcommand_matches("select").unwrap();
                     let new_profile_name = subsubcommand_matches.value_of("name").expect("Error reading name of selected profile.");
-                    config_file.current_profile = new_profile_name.to_string();
-                    confy::store_path(config_file_path, config_file).expect("Error saving configuration file!");
-                    println!("Switched to profile {}", new_profile_name);
+                    // Test that the new profile exists
+                    if !Path::new(format!("{}/{}", profiles_path, new_profile_name)).exists() {
+                        println!("Profile {} does not exist!", new_profile_name);
+                        exit(1);
+                    } else {
+                        config_file.current_profile = new_profile_name.to_string();
+                        confy::store_path(config_file_path, config_file).expect("Error saving configuration file!");
+                        println!("Switched to profile {}", new_profile_name);
+                    }
                 }
                 Some("remove") | Some("rm") => {
                     let subsubcommand_matches = subcommand_matches.subcommand_matches("select").unwrap();
@@ -120,10 +126,6 @@ fn main() {
                     exit(1);
                 }
             }
-            // let new_profile = subcommand_matches.value_of("profile").expect("Failed to read new profile from command");
-            // Test that the profile exists
-
-            // config_file.current_profile = new_profile.to_string();
         }
         _ => {
             println!("Command missing! Try with -h for more info.");
