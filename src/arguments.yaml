@@ -1,20 +1,13 @@
 name: pipboy
 version: "0.1.0"
-author: Aayla Semyonova. <aayla@aayla.dev>
+author: Aayla Semyonova <aayla@aayla.dev>
 about: A Mod Manager for Fallout New Vegas
+args:
+  - config:
+      short: c
+      help: Path to config file
+      default_value: "~/.pipboy.conf"
 subcommands:
-    - test:
-        about: controls testing features
-        version: "1.3"
-        author: Someone E. <someone_else@other.com>
-        args:
-            - debug:
-                short: d
-                help: print debug information
     - cache:
         about: Cache current Fallout Data/ directory
-        args:
-          - config:
-              short: c
-              help: Path to config file
-              default: 
+        
