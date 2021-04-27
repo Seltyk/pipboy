@@ -9,11 +9,19 @@ args:
       default_value: "~/.pipboy"
 subcommands:
     - cache:
-        about: Cache current Fallout Data/ directory
-        args:
-          - name:
-              required: true
-              help: Name of cache file
+        subcommands:
+            - create:
+                about: Cache current Fallout Data/ directory
+                args:
+                  - name:
+                      required: true
+                      help: Name of cache file
+            - restore:
+                about: Restore a cache file
+                args:
+                  - name:
+                      required: true
+                      help: Restore the data directory to a saved cache
     - profile:
         subcommands:
           - list:

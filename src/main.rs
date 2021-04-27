@@ -122,27 +122,38 @@ fn main() {
             }
         }
         Some("cache") => {
-            // Test that data path is real
-            if !Path::new(&current_profile_file.data_path).is_dir() {
-                println!("{} is not a valid path!", &current_profile_file.data_path);
-                exit(1);
+            // Check the given subcommand
+            let subcommand_matches = matches.subcommand_matches("cache").unwrap();
+            // Select a given profile
+            match subcommand_matches.subcommand_name() {
+                Some("create") => {
+                    // Test that data path is real
+                    if !Path::new(&current_profile_file.data_path).is_dir() {
+                        println!("{} is not a valid path!", &current_profile_file.data_path);
+                        exit(1);
+                    }
+                    // Create cache folder if necessary
+                    let cache_directory = format!("{}/caches/{}/", &config_path, config_file.current_profile);
+                    if !Path::new(&cache_directory).exists() {
+                        fs::create_dir_all(&cache_directory).expect(&format!("Error creating {}", &cache_directory));
+                    }
+                    // Get cache name from command line
+                    let subcommand_matches  = matches.subcommand_matches("cache").unwrap();
+                    let cache_name = subcommand_matches.value_of("name").expect("Error reading name of cache.");
+                    // Ensure the file doesn't already exist
+                    let cache_path = &format!("{}/{}.tar.gz", cache_directory, &format!("{}.tar.gz", cache_name));
+                    if Path::new(&cache_path).exists() {
+                        println!("Cache {} already exists!", &cache_name);
+                        exit(1);
+                    }
+                    // Tarball the directory contents
+                    archives::create_tarball(&cache_path, &current_profile_file.data_path).expect("Error caching Data directory. Do not install mods.");
+                }
+                _ => {
+                    println!("Command missing! Try with -h for more info.");
+                    exit(1);
+                }
             }
-            // Create cache folder if necessary
-            let cache_directory = format!("{}/caches/{}/", &config_path, config_file.current_profile);
-            if !Path::new(&cache_directory).exists() {
-                fs::create_dir_all(&cache_directory).expect(&format!("Error creating {}", &cache_directory));
-            }
-            // Get cache name from command line
-            let subcommand_matches  = matches.subcommand_matches("cache").unwrap();
-            let cache_name = subcommand_matches.value_of("name").expect("Error reading name of cache.");
-            // Ensure the file doesn't already exist
-            let cache_path = &format!("{}/{}.tar.gz", cache_directory, &format!("{}.tar.gz", cache_name));
-            if Path::new(&cache_path).exists() {
-                println!("Cache {} already exists!", &cache_name);
-                exit(1);
-            }
-            // Tarball the directory contents
-            archives::create_tarball(&cache_path, &current_profile_file.data_path).expect("Error caching Data directory. Do not install mods.");
         }
         _ => {
             println!("Command missing! Try with -h for more info.");
