@@ -121,7 +121,17 @@ fn main() {
             }
         }
         Some("cache") => {
-            println!("{}", current_profile_file.data_path);
+            // Test that data path is real
+            if !Path::new(&current_profile_file.data_path).is_dir() {
+                println!("{} is not a valid path!", &current_profile_file.data_path);
+                exit(1);
+            }
+            // Create cache folder if necessary
+            let cache_directory = format!("{}/caches/", &config_path);
+            if !Path::new(&cache_directory).exists() {
+                fs::create_dir_all(&cache_directory).expect(&format!("Error creating {}", &cache_directory));
+
+            }
         }
         _ => {
             println!("Command missing! Try with -h for more info.");
