@@ -48,7 +48,10 @@ fn main() {
     // Create path for config if it doesn't exist
     fs::create_dir_all(Path::new(&config_path).parent().expect("How did you even get here"));
     // Load configuration file
-    let config = config_file::load_config_file(&config_path);
+    let config_file = match config_file::load_config_file(config_file_path) {
+        Ok(config_file) => config_file,
+        Err(e) => panic!("Failed to load configuration file: {}", e),
+    };
 
     // Execute the given subcommand
     match matches.subcommand_name() {
