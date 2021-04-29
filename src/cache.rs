@@ -15,3 +15,32 @@
 // You should have received a copy of the GNU General Public License
 // along with pipboy.  If not, see <http://www.gnu.org/licenses/>.
 
+use super::archives;
+
+use std::process::exit;
+use std::path::Path;
+use std::fs;
+
+pub(crate) fn create_cache(data_path: &str, cache_directory: &str, cache_name: &str) {
+    // Test that data path is real
+    if !Path::new(&data_path).is_dir() {
+        println!("{} is not a valid path!", &data_path);
+        exit(1);
+    }
+    // Create cache folder if necessary
+    if !Path::new(&cache_directory).exists() {
+        fs::create_dir_all(&cache_directory).expect(&format!("Error creating {}", &cache_directory));
+    }
+    // Ensure the file doesn't already exist
+    let cache_path = &format!("{}/{}.tar.gz", cache_directory, &cache_name);
+    if Path::new(&cache_path).exists() {
+        println!("Cache {} already exists!", &cache_name);
+        exit(1);
+    }
+    // Tarball the directory contents
+    archives::create_tarball(&cache_path, &data_path).expect("Error caching Data directory. Do not install mods.");
+}
+
+pub(crate) fn restore_cache(data_path: &str, cache_path: &str, cache_name: &str) {
+
+}
