@@ -41,6 +41,21 @@ pub(crate) fn create_cache(data_path: &str, cache_directory: &str, cache_name: &
     archives::create_tarball(&cache_path, &data_path).expect("Error caching Data directory. Do not install mods.");
 }
 
-pub(crate) fn restore_cache(data_path: &str, cache_path: &str, cache_name: &str) {
-
+pub(crate) fn restore_cache(data_path: &str, cache_directory: &str, cache_name: &str) {
+    let cache_path = &format!("{}/{}.tar.gz", &cache_directory, &cache_name);
+    // Test that a cache to restore from exists
+    if !Path::new(cache_path).exists() {
+        println!("Cache {} does not exist!", &cache_name);
+        exit(1);
+    }
+    // Test that the data path exists before attempting to remove
+    if Path::new(&data_path).is_dir() {
+        println!("Removing existing data directory.");
+        fs::remove_dir_all(&data_path).expect("Error deleting Data/ folder. Make sure you have permissions to do this.");
+    }
+    // Create new data folder
+    fs::create_dir(&data_path).expect("Error creating new Data/ folder. Make sure you have permissions to do this.");
+    // Unpack tarball
+    println!("Restoring cache.");
+    archives::unpack_tarball(&cache_path, &data_path).expect("Error restoring cache");
 }
