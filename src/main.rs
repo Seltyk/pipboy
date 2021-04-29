@@ -149,6 +149,28 @@ fn main() {
                     // Tarball the directory contents
                     archives::create_tarball(&cache_path, &current_profile_file.data_path).expect("Error caching Data directory. Do not install mods.");
                 }
+                Some("restore") => {
+                    // Get cache name from command line
+                    let subsubcommand_matches  = subcommand_matches.subcommand_matches("restore").unwrap();
+                    let cache_name = subsubcommand_matches.value_of("name").expect("Error reading name of cache.");
+                    let cache_directory = format!("{}/caches/{}/", &config_path, config_file.current_profile);
+                    // Ensure the file doesn't already exist
+                    let cache_path = &format!("{}/{}.tar.gz", cache_directory, &format!("{}.tar.gz", cache_name));
+                    // Test that a cache to restore from exists
+                    if !Path::new(cache_path).exists() {
+                        println!("Cache {} does not exist!", &cache_name);
+                        exit(1);
+                    }
+                    // Test that the data path exists before attempting to remove
+                    if Path::new(&current_profile_file.data_path).is_dir() {
+                        println!("Removing existing data directory.");
+                        fs::remove_dir_all(&current_profile_file.data_path).expect("Error deleting Data/ folder. Make sure you have permissions to do this.");
+                    }
+                    // Create new data folder
+                    fs::create_dir(&current_profile_file.data_path).expect("Error creating new Data/ folder. Make sure you have permissions to do this.");
+                    // Unpack tarball
+                    archives::unpack_tarball(&cache_path, &current_profile_file.data_path).expect("Error restoring cache");
+                }
                 _ => {
                     println!("Command missing! Try with -h for more info.");
                     exit(1);

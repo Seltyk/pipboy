@@ -16,8 +16,10 @@
 // along with pipboy.  If not, see <http://www.gnu.org/licenses/>.
 
 use std::fs::File;
+use std::error::Error;
 use flate2::Compression;
 use flate2::write::GzEncoder;
+use tar::Archive;
 
 pub(crate) fn create_tarball(tarball_path: &str, input_files: &str) -> Result<(), std::io::Error> {
     // Create a tarball containing input_files at the given tarball_path
@@ -25,5 +27,12 @@ pub(crate) fn create_tarball(tarball_path: &str, input_files: &str) -> Result<()
     let enc = GzEncoder::new(tar_gz, Compression::default());
     let mut tar = tar::Builder::new(enc);
     tar.append_dir_all("./", input_files)?;
+    Ok(())
+}
+
+pub(crate) fn unpack_tarball(tarball_path: &str, destination_path: &str) -> Result<(), Box<dyn Error>> {
+    // Ensure the tarball exists
+    let mut tarball = Archive::new(File::open(&tarball_path).unwrap());
+    tarball.unpack(&destination_path).unwrap();
     Ok(())
 }
