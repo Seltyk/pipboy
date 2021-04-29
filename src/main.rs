@@ -131,7 +131,7 @@ fn main() {
             match subcommand_matches.subcommand_name() {
                 Some("create") => {
                     // Get cache name from command line
-                    let subsubcommand_matches  = subcommand_matches.subcommand_matches("restore").unwrap();
+                    let subsubcommand_matches  = subcommand_matches.subcommand_matches("create").unwrap();
                     let cache_name = subsubcommand_matches.value_of("name").expect("Error reading name of cache.");
                     // Create cache
                     cache::create_cache(&current_profile_file.data_path, &cache_directory, &cache_name);
