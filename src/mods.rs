@@ -23,10 +23,13 @@ use substring::Substring;
 
 use super::archives;
 
-pub(crate) fn install_mod(config_path: &str, data_path: &str, mod_value: &str, verbose: bool) {
+pub(crate) fn install_mod(config_path: &str, data_path: &str, mod_value: &str) {
     let mod_values = split_mod_value(mod_value);
     let mod_author = &mod_values[0];
     let mod_name = &mod_values[1];
+    // Install the mod
+    let tarball_path = format!("{}/mods/cached/{}/{}/mod.tar.gz", &config_path, &mod_author, &mod_name);
+    archives::unpack_tarball(&tarball_path, &data_path).expect("Failed to extract mod! Ensure you have the permissions to do this.");
 }
 
 pub(crate) fn generate_index(config_path: &str, mod_value: &str, verbose: bool) -> Result<(), &'static str> {
@@ -106,10 +109,11 @@ pub(crate) fn test_file_conflicts(config_path: &str, mod_value: &str, data_path:
     // Iterate over mod files and see if they would conflict with another file
     for item in mods.lines() {
         // Only test files that are going into the Data/ path
-        if item.substring(0, 5) == "Data/" {
+        if item.substring(0, 5) == "Data/" && item != "Data/" {
             let outpath = format!("{}/{}", &data_path, &item);
             if Path::new(&outpath).exists() {
                 println!("File conflict: {}", &item);
+                return Err("File conflict detected");
             } else {
                 if verbose {
                     println!("No conflict: {}", &item);

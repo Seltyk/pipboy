@@ -64,3 +64,6 @@ subcommands:
           - update:
               short: u
               help: Update package repository before attempting to install
+          - force:
+              short: f
+              help: Ignore file conflicts and overwrite existing files

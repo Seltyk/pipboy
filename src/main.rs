@@ -193,9 +193,15 @@ fn main() {
                     }
                 }
                 // Check for file conflicts
-                mods::test_file_conflicts(&config_path, &mod_value, &current_profile_file.install_path, matches.is_present("verbose")).expect("Error checking for file conflicts");
+                if !subcommand_matches.is_present("force") {
+                    mods::test_file_conflicts(&config_path, &mod_value, &current_profile_file.install_path, matches.is_present("verbose")).expect("Error checking for file conflicts");
+                } else {
+                    if matches.is_present("verbose") {
+                        println!("Skipping file conflict testing");
+                    }
+                }
                 // Install the mod
-                mods::install_mod(&config_path, &format!("{}/Data", &current_profile_file.install_path), &mod_value, matches.is_present("verbose"))
+                mods::install_mod(&config_path, &current_profile_file.install_path, &mod_value)
             } else {
                 // Mod does not exist locally and needs to be fetched
             }
