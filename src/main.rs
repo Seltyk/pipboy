@@ -150,13 +150,13 @@ fn main() {
                     let subsubcommand_matches  = subcommand_matches.subcommand_matches("create").unwrap();
                     let cache_name = subsubcommand_matches.value_of("name").expect("Error reading name of cache.");
                     // Create cache
-                    cache::create_cache(&current_profile_file.install_path, &cache_directory, &cache_name);
+                    cache::create_cache(format!("{}/Data", &current_profile_file.install_path), &cache_directory, &cache_name);
                 }
                 Some("restore") => {
                     // Get cache name from command line
                     let subsubcommand_matches  = subcommand_matches.subcommand_matches("restore").unwrap();
                     let cache_name = subsubcommand_matches.value_of("name").expect("Error reading name of cache.");
-                    cache::restore_cache(&current_profile_file.install_path, &cache_directory, &cache_name);
+                    cache::restore_cache(format!("{}/Data", &current_profile_file.install_path), &cache_directory, &cache_name);
                 }
                 _ => {
                     println!("Command missing! Try with -h for more info.");
@@ -195,7 +195,7 @@ fn main() {
                 // Check for file conflicts
                 mods::test_file_conflicts(&config_path, &mod_value, &current_profile_file.install_path).expect("Error checking for file conflicts");
                 // Install the mod
-                mods::install_mod(&config_path, &current_profile_file.install_path, &mod_value, matches.is_present("verbose"))
+                mods::install_mod(&config_path, format!("{}/Data", &current_profile_file.install_path), &mod_value, matches.is_present("verbose"))
             } else {
                 // Mod does not exist locally and needs to be fetched
             }
