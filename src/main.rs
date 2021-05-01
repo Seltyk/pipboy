@@ -19,6 +19,8 @@ mod config_file;
 mod profile;
 mod archives;
 mod cache;
+mod remote;
+mod mods;
 
 #[macro_use]
 extern crate clap;
@@ -163,22 +165,33 @@ fn main() {
             }
         }
         Some("install") => {
-            let subcommand_matches = matches.subcommand_matches("install").unwrap();
-            let mod_value = subcommand_matches.value_of("name").unwrap();
-            // Split modvalue into author and name
-            let mut mod_value_iterator = mod_value.split("/");
-            let mod_author = mod_value_iterator.next().unwrap();
-            let mod_name = mod_value_iterator.next().unwrap();
-            // Define mod cache path
-            let modcache_path = format!("{}/mods/", &config_path);
-            // Create mod cache directory if it doesn't exist
-            if !Path::new(&modcache_path).exists() {
-                fs::create_dir_all(&modcache_path)
-                    .expect("Failed to create path to mods cache. Ensure you have permissions to do this.");
+            let subcommand_matches = matches.subcommand_matches("install")
+                .unwrap();
+            // Update repository index if requested
+            if subcommand_matches.is_present("update") {
+                let repos = remote::get_repositories(&config_file.repository_list);
+                for repo in repos {
+                    remote::get_index(&repo);
+                }
             }
-            // Search mod cache for modname
-            println!("{}", mod_author);
-            println!("{}", mod_name);
+            let mod_value = subcommand_matches.value_of("name")
+                .unwrap();
+            // Split modvalue into author and name
+            let mod_values = mods::split_mod_value(mod_value);
+            let mod_author = &mod_values[0];
+            let mod_name = &mod_values[1];
+            // Search the mod cache
+            if mods::search_mod_cache(&config_path, &mod_author, &mod_name) {
+                // Mod exists and can be installed
+                if !mods::mod_has_index(&config_path, &mod_author, &mod_name) {
+                    // Mod does not have a file index. Generate before install.
+                    mods::generate_index(&config_path, &mod_name, &mod_author);
+                }
+                // Install the mod
+                mods::install_mod(&config_path, &current_profile_file.data_path, &mod_author, &mod_name)
+            } else {
+                // Mod does not exist locally and needs to be fetched
+            }
         }
         _ => {
             println!("Command missing! Try with -h for more info.");

@@ -58,3 +58,6 @@ subcommands:
           - name:
               required: true
               help: The mod to install formatted author/mod
+          - update:
+              short: u
+              help: Update package repository before attempting to install
