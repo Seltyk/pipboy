@@ -148,6 +148,23 @@ fn main() {
                 }
             }
         }
+        Some("install") => {
+            let subcommand_matches = matches.subcommand_matches("install").unwrap();
+            let mod_value = subcommand_matches.value_of("name").unwrap();
+            // Split modvalue into author and name
+            let mut mod_value_iterator = mod_value.split("/");
+            let mod_author = mod_value_iterator.next().unwrap();
+            let mod_name = mod_value_iterator.next().unwrap();
+            // Define mod cache path
+            let modcache_path = format!("{}/mods/", &config_path);
+            // Create mod cache directory if it doesn't exist
+            if !Path::new(&modcache_path).exists() {
+                fs::create_dir_all(&modcache_path).expect("Failed to create path to mods cache. Ensure you have permissions to do this.");
+            }
+            // Search mod cache for modname
+            println!("{}", mod_author);
+            println!("{}", mod_name);
+        }
         _ => {
             println!("Command missing! Try with -h for more info.");
             exit(1);

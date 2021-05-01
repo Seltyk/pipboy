@@ -52,3 +52,9 @@ subcommands:
                 - name:
                     required: true
                     help: The profile to remove
+    - install:
+        about: Install a mod
+        args:
+          - name:
+              required: true
+              help: The mod to install formatted author/mod
