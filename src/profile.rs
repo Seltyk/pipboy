@@ -21,13 +21,13 @@ use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize)]
 pub(crate) struct ProfileFile {
-    pub(crate) data_path: String,
+    pub(crate) install_path: String,
     pub(crate) enabled_mods: String,
 }
 /// `ProfileFile` implements `Default`
 impl std::default::Default for ProfileFile {
     fn default() -> Self { Self {
-        data_path: "path/to/fallout/Data/".into(),
+        install_path: "path/to/fallout/install/".into(),
         enabled_mods: "".into(),
     }}
 }

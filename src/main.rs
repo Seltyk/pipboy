@@ -150,13 +150,13 @@ fn main() {
                     let subsubcommand_matches  = subcommand_matches.subcommand_matches("create").unwrap();
                     let cache_name = subsubcommand_matches.value_of("name").expect("Error reading name of cache.");
                     // Create cache
-                    cache::create_cache(&current_profile_file.data_path, &cache_directory, &cache_name);
+                    cache::create_cache(&current_profile_file.install_path, &cache_directory, &cache_name);
                 }
                 Some("restore") => {
                     // Get cache name from command line
                     let subsubcommand_matches  = subcommand_matches.subcommand_matches("restore").unwrap();
                     let cache_name = subsubcommand_matches.value_of("name").expect("Error reading name of cache.");
-                    cache::restore_cache(&current_profile_file.data_path, &cache_directory, &cache_name);
+                    cache::restore_cache(&current_profile_file.install_path, &cache_directory, &cache_name);
                 }
                 _ => {
                     println!("Command missing! Try with -h for more info.");
@@ -181,19 +181,21 @@ fn main() {
             let mod_author = &mod_values[0];
             let mod_name = &mod_values[1];
             // Search the mod cache
-            if mods::search_mod_cache(&config_path, &mod_author, &mod_name) {
+            if mods::search_mod_cache(&config_path, &mod_value) {
                 // Mod exists and can be installed
-                if !mods::mod_has_index(&config_path, &mod_author, &mod_name) {
+                if !mods::mod_has_index(&config_path, &mod_value) {
                     // Mod does not have a file index. Generate before install.
-                    mods::generate_index(&config_path, &mod_author, &mod_name, matches.is_present("verbose"))
+                    mods::generate_index(&config_path, &mod_value, matches.is_present("verbose"))
                         .expect("This error shouldn't be possible");
                 } else {
                     if matches.is_present("verbose") {
                         println!("Mod {}/{} already has an index file", &mod_author, &mod_name);
                     }
                 }
+                // Check for file conflicts
+                mods::test_file_conflicts(&config_path, &mod_value, &current_profile_file.install_path).expect("Error checking for file conflicts");
                 // Install the mod
-                mods::install_mod(&config_path, &current_profile_file.data_path, &mod_author, &mod_name, matches.is_present("verbose"))
+                mods::install_mod(&config_path, &current_profile_file.install_path, &mod_value, matches.is_present("verbose"))
             } else {
                 // Mod does not exist locally and needs to be fetched
             }
