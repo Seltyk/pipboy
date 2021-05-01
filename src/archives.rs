@@ -17,10 +17,7 @@
 
 use std::fs::File;
 use std::error::Error;
-use flate2::Compression;
-use flate2::write::GzEncoder;
 use tar::Archive;
-use tar::Builder;
 
 pub(crate) fn create_tarball(tarball_path: &str, input_files: &str) -> Result<(), std::io::Error> {
     // Create a tarball containing input_files at the given tarball_path
