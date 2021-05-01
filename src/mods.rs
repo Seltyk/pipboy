@@ -17,17 +17,29 @@
 
 use std::path::Path;
 use std::fs;
+use std::io::{Error, ErrorKind};
 
-pub(crate) fn install_mod(config_path: &str, data_path: &str, mod_author: &str, mod_name: &str) {
+use super::archives;
+
+pub(crate) fn install_mod(config_path: &str, data_path: &str, mod_author: &str, mod_name: &str, verbose: bool) {
     // Implement this later
 }
 
-pub(crate) fn generate_index(config_path: &str, mod_author: &str, mod_name: &str) {
+pub(crate) fn generate_index(config_path: &str, mod_author: &str, mod_name: &str, verbose: bool) -> Result<(), &'static str> {
     // Implement this later
+    println!("{}", format!("Generating file index for {}/{}", &mod_author, &mod_name));
+    // Create mod path
+    let mod_path = format!("{}/mods/cached/{}/{}/mod.tar.gz", &config_path, &mod_author, &mod_name);
+    if Path::new(&mod_path).exists() {
+        archives::list_content(&mod_path);
+        Ok(())
+    } else {
+        Err("Can't index a mod that doesn't exist!")
+    }
 }
 
 pub(crate) fn mod_has_index(config_path: &str, mod_author: &str, mod_name: &str) -> bool {
-    true
+    false
 }
 
 pub(crate) fn split_mod_value(mod_value: &str) -> Vec<String> {

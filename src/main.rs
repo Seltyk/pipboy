@@ -185,10 +185,11 @@ fn main() {
                 // Mod exists and can be installed
                 if !mods::mod_has_index(&config_path, &mod_author, &mod_name) {
                     // Mod does not have a file index. Generate before install.
-                    mods::generate_index(&config_path, &mod_name, &mod_author);
+                    mods::generate_index(&config_path, &mod_author, &mod_name, true)
+                        .expect("This error shouldn't be possible");
                 }
                 // Install the mod
-                mods::install_mod(&config_path, &current_profile_file.data_path, &mod_author, &mod_name)
+                mods::install_mod(&config_path, &current_profile_file.data_path, &mod_author, &mod_name, true)
             } else {
                 // Mod does not exist locally and needs to be fetched
             }
