@@ -15,7 +15,19 @@
 // You should have received a copy of the GNU General Public License
 // along with pipboy.  If not, see <http://www.gnu.org/licenses/>.
 
+use std::error::Error;
+
 /// Get the package index of a remote repository
 pub(crate) fn get_index(remote: &str) {
-    
+    let index_path = format!("https://{}/index.json", remote);
+    println!("{}", &index_path);
+}
+
+pub(crate) fn get_repositories(csv: &str) -> Vec<String> {
+    // I should use a collection here but I'm not sure how
+    let mut vec = Vec::new();
+    for repo in csv.split(",") {
+        vec.push(repo.to_string());
+    }
+    return vec;
 }
