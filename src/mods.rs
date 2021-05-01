@@ -19,15 +19,20 @@ use std::path::Path;
 use std::fs;
 use std::fs::File;
 use std::io::Write;
+use substring::Substring;
 
 use super::archives;
 
-pub(crate) fn install_mod(config_path: &str, data_path: &str, mod_author: &str, mod_name: &str, verbose: bool) {
-    // Implement this later
+pub(crate) fn install_mod(config_path: &str, data_path: &str, mod_value: &str, verbose: bool) {
+    let mod_values = split_mod_value(mod_value);
+    let mod_author = &mod_values[0];
+    let mod_name = &mod_values[1];
 }
 
-pub(crate) fn generate_index(config_path: &str, mod_author: &str, mod_name: &str, verbose: bool) -> Result<(), &'static str> {
-    // Implement this later
+pub(crate) fn generate_index(config_path: &str, mod_value: &str, verbose: bool) -> Result<(), &'static str> {
+    let mod_values = split_mod_value(mod_value);
+    let mod_author = &mod_values[0];
+    let mod_name = &mod_values[1];
     println!("{}", format!("Generating file index for {}/{}", &mod_author, &mod_name));
     // Create mod path
     let mod_path = format!("{}/mods/cached/{}/{}/mod.tar.gz", &config_path, &mod_author, &mod_name);
@@ -51,7 +56,10 @@ pub(crate) fn generate_index(config_path: &str, mod_author: &str, mod_name: &str
     }
 }
 
-pub(crate) fn mod_has_index(config_path: &str, mod_author: &str, mod_name: &str) -> bool {
+pub(crate) fn mod_has_index(config_path: &str, mod_value: &str) -> bool {
+    let mod_values = split_mod_value(mod_value);
+    let mod_author = &mod_values[0];
+    let mod_name = &mod_values[1];
     let index_path = format!("{}/mods/indices/{}/{}/index", &config_path, &mod_author, &mod_name);
     return Path::new(&index_path).exists();
 }
@@ -65,7 +73,10 @@ pub(crate) fn split_mod_value(mod_value: &str) -> Vec<String> {
     return vec;
 }
 
-pub(crate) fn search_mod_cache(config_path: &str, mod_author: &str, mod_name: &str) -> bool {
+pub(crate) fn search_mod_cache(config_path: &str, mod_value: &str) -> bool {
+    let mod_values = split_mod_value(mod_value);
+    let mod_author = &mod_values[0];
+    let mod_name = &mod_values[1];
     // Define mod cache path
     let mod_cache_path: &str = &format!("{}/mods/cached/", &config_path);
     // Ensure the mod cache exists before trying to search it
@@ -77,4 +88,30 @@ pub(crate) fn search_mod_cache(config_path: &str, mod_author: &str, mod_name: &s
     let mod_path: &str = &format!("{}/{}/{}/mod.tar.gz", &mod_cache_path, &mod_author, &mod_name);
     // Return the value
     return Path::new(&mod_path).exists()
+}
+
+pub(crate) fn test_file_conflicts(config_path: &str, mod_value: &str, data_path: &str) -> Result<(), &'static str> {
+    let mod_values = split_mod_value(mod_value);
+    let mod_author = &mod_values[0];
+    let mod_name = &mod_values[1];
+    // Get mod index path
+    let index_path = format!("{}/mods/indices/{}/{}/index", &config_path, &mod_author, &mod_name);
+    // Ensure all provided paths are valid
+    if !Path::new(&index_path).exists() || !Path::new(&data_path).exists() {
+        return Err("Input path does not exist");
+    }
+    // Load mod index file
+    let mods: String = fs::read_to_string(&index_path)
+        .unwrap().parse().unwrap();
+    // Iterate over mod files and see if they would conflict with another file
+    for item in mods.lines() {
+        // Only test files that are going into the Data/ path
+        if item.substring(0, 5) == "Data/" {
+            let outpath = format!("{}/{}", &data_path, &item);
+            if Path::new(&outpath).exists() {
+                return Err(format!("File conflict detected! {}", &item))
+            }
+        }
+    }
+    Ok(())
 }
