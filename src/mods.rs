@@ -90,7 +90,7 @@ pub(crate) fn search_mod_cache(config_path: &str, mod_value: &str) -> bool {
     return Path::new(&mod_path).exists()
 }
 
-pub(crate) fn test_file_conflicts(config_path: &str, mod_value: &str, data_path: &str) -> Result<(), &'static str> {
+pub(crate) fn test_file_conflicts(config_path: &str, mod_value: &str, data_path: &str, verbose: bool) -> Result<(), &'static str> {
     let mod_values = split_mod_value(mod_value);
     let mod_author = &mod_values[0];
     let mod_name = &mod_values[1];
@@ -109,7 +109,11 @@ pub(crate) fn test_file_conflicts(config_path: &str, mod_value: &str, data_path:
         if item.substring(0, 5) == "Data/" {
             let outpath = format!("{}/{}", &data_path, &item);
             if Path::new(&outpath).exists() {
-                return Err(format!("File conflict detected! {}", &item))
+                println!("File conflict: {}", &item);
+            } else {
+                if verbose {
+                    println!("No conflict: {}", &item);
+                }
             }
         }
     }
