@@ -69,4 +69,4 @@ subcommands:
           - force:
               short: f
               long: force
-              help: Ignore file conflicts and overwrite existing files
+              help: "Ignore file conflicts and overwrite existing files (WARNING: THIS CAN CAUSE UNDEFINED BEHAVIOR)"

@@ -181,30 +181,32 @@ fn main() {
             let mod_author = &mod_values[0];
             let mod_name = &mod_values[1];
             // Search the mod cache
-            if mods::search_mod_cache(&config_path, &mod_value) {
-                // Mod exists and can be installed
-                if !mods::mod_has_index(&config_path, &mod_value) {
-                    // Mod does not have a file index. Generate before install.
-                    mods::generate_index(&config_path, &mod_value, matches.is_present("verbose"))
-                        .expect("This error shouldn't be possible");
-                } else {
-                    if matches.is_present("verbose") {
-                        println!("Mod {}/{} already has an index file", &mod_author, &mod_name);
-                    }
-                }
-                // Check for file conflicts
-                if !subcommand_matches.is_present("force") {
-                    mods::test_file_conflicts(&config_path, &mod_value, &current_profile_file.install_path, matches.is_present("verbose")).expect("Error checking for file conflicts");
-                } else {
-                    if matches.is_present("verbose") {
-                        println!("Skipping file conflict testing");
-                    }
-                }
-                // Install the mod
-                mods::install_mod(&config_path, &current_profile_file.install_path, &mod_value)
-            } else {
+            if !mods::search_mod_cache(&config_path, &mod_value) {
                 // Mod does not exist locally and needs to be fetched
             }
+            // Test if the mod has an index file
+            if !mods::mod_has_index(&config_path, &mod_value) {
+                // Mod does not have a file index. Generate before install.
+                mods::generate_index(&config_path, &mod_value, matches.is_present("verbose"))
+                    .expect("This error shouldn't be possible");
+            } else {
+                if matches.is_present("verbose") {
+                    println!("Mod {}/{} already has an index file", &mod_author, &mod_name);
+                }
+            }
+            // Check for file conflicts
+            if !subcommand_matches.is_present("force") {
+                mods::test_file_conflicts(&config_path, &mod_value, &current_profile_file.install_path, matches.is_present("verbose")).expect("Error checking for file conflicts");
+            } else {
+                if matches.is_present("verbose") {
+                    println!("Skipping file conflict testing");
+                }
+            }
+            // Install the mod
+            mods::install_mod(&config_path, &current_profile_file.install_path, &mod_value)
+        }
+        Some("uninstall") => {
+
         }
         _ => {
             println!("Command missing! Try with -h for more info.");
