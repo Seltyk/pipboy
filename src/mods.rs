@@ -17,7 +17,8 @@
 
 use std::path::Path;
 use std::fs;
-use std::io::{Error, ErrorKind};
+use std::fs::File;
+use std::io::Write;
 
 use super::archives;
 
@@ -30,8 +31,17 @@ pub(crate) fn generate_index(config_path: &str, mod_author: &str, mod_name: &str
     println!("{}", format!("Generating file index for {}/{}", &mod_author, &mod_name));
     // Create mod path
     let mod_path = format!("{}/mods/cached/{}/{}/mod.tar.gz", &config_path, &mod_author, &mod_name);
+    let index_path = format!("{}/mods/indices/{}/{}/index", &config_path, &mod_author, &mod_name);
+    // Create indices path if it doesn't exist
+    if !Path::new(&index_path).parent().unwrap().exists() {
+        fs::create_dir_all(Path::new(&index_path).parent().unwrap()).expect("Unable to create indices folder. Ensure you have permission to do this.");
+    }
     if Path::new(&mod_path).exists() {
-        archives::list_content(&mod_path);
+        let mod_contents = archives::list_contents(&mod_path);
+        let mut f = File::create(&index_path).expect("Cannot create index file! Ensure you have permission to do this.");
+        for item in mod_contents {
+            f.write(format!("{}\n", item).as_bytes()).expect("Failed to write index file!");
+        }
         Ok(())
     } else {
         Err("Can't index a mod that doesn't exist!")

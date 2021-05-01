@@ -39,7 +39,7 @@ pub(crate) fn unpack_tarball(tarball_path: &str, destination_path: &str) -> Resu
 }
 
 pub(crate) fn list_contents(tarball_path: &str) -> Vec<String> {
-    let return_vector = Vec::new();
+    let mut return_vector = Vec::new();
     let mut ar = Archive::new(File::open(&tarball_path).unwrap());
     let ar_entries = ar.entries().unwrap();
     for item in ar_entries {
