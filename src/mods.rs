@@ -40,6 +40,9 @@ pub(crate) fn generate_index(config_path: &str, mod_author: &str, mod_name: &str
         let mod_contents = archives::list_contents(&mod_path);
         let mut f = File::create(&index_path).expect("Cannot create index file! Ensure you have permission to do this.");
         for item in mod_contents {
+            if verbose {
+                println!("{}", item);
+            }
             f.write(format!("{}\n", item).as_bytes()).expect("Failed to write index file!");
         }
         Ok(())

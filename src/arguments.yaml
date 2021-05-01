@@ -7,6 +7,9 @@ args:
       short: c
       help: Path to config directory
       default_value: "~/.pipboy"
+  - verbose:
+      short: v
+      help: Increase verbosity of output
 subcommands:
     - cache:
         subcommands:
