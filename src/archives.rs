@@ -34,6 +34,18 @@ pub(crate) fn create_tarball(tarball_path: &str, input_files: &str) -> Result<()
 pub(crate) fn unpack_tarball(tarball_path: &str, destination_path: &str) -> Result<(), Box<dyn Error>> {
     // Ensure the tarball exists
     let mut tarball = Archive::new(File::open(&tarball_path).unwrap());
-    tarball.unpack(&destination_path).unwrap();
+    tarball.unpack(&destination_path)?;
     Ok(())
+}
+
+pub(crate) fn list_contents(tarball_path: &str) -> Vec<String> {
+    let return_vector = Vec::new();
+    let mut ar = Archive::new(File::open(&tarball_path).unwrap());
+    let ar_entries = ar.entries().unwrap();
+    for item in ar_entries {
+        let file = item.unwrap();
+        let file_path = file.header().path().unwrap();
+        return_vector.push(file_path.to_str().unwrap().to_string())
+    }
+    return return_vector;
 }
