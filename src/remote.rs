@@ -17,7 +17,7 @@
 
 /// Get the package index of a remote repository
 pub(crate) fn get_index(remote: &str) {
-    let index_path = format!("https://{}/index.json", remote);
+    let index_path = format!("Updated index for: https://{}/index.json", remote);
     println!("{}", &index_path);
 }
 
