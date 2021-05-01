@@ -49,7 +49,8 @@ pub(crate) fn generate_index(config_path: &str, mod_author: &str, mod_name: &str
 }
 
 pub(crate) fn mod_has_index(config_path: &str, mod_author: &str, mod_name: &str) -> bool {
-    false
+    let index_path = format!("{}/mods/indices/{}/{}/index", &config_path, &mod_author, &mod_name);
+    return Path::new(&index_path).exists();
 }
 
 pub(crate) fn split_mod_value(mod_value: &str) -> Vec<String> {
