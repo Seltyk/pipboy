@@ -32,7 +32,8 @@ use std::path::Path;
 fn resolve_home_dir(path: &str) -> String {
     if path == "~" || path.substring(0, 2) == "~/" {
         // Get the home directory from environment variables
-        let home_directory = env::var("HOME").expect("HOME is undefined in environment variables");
+        let home_directory = env::var("HOME")
+            .expect("HOME is undefined in environment variables");
         let result = str::replace(path, "~", &home_directory);
         result
     } else {
@@ -46,12 +47,14 @@ fn main() {
     let matches = App::from_yaml(yaml).get_matches();
     // Get config path
     let config_path = resolve_home_dir(
-        matches.value_of("config").expect("Failed to read config path argument")
+        matches.value_of("config")
+            .expect("Failed to read config path argument")
     );
     let config_file_path = format!("{}/config", config_path);
     // Create path for config if it doesn't exist
     if !Path::new(&config_path).exists() {
-        fs::create_dir_all(&config_path).expect("Failed to create path to configuration directory.");
+        fs::create_dir_all(&config_path)
+            .expect("Failed to create path to configuration directory.");
     }
     // Load configuration file
     let mut config_file = match config_file::load_config_file(&config_file_path) {
@@ -61,16 +64,19 @@ fn main() {
     // Get path to current profile
     let profiles_path = format!("{}/profiles", config_path);
     let current_profile_file_path = format!("{}/{}", &profiles_path, &config_file.current_profile);
-    let current_profile_file = profile::load_profile_file(&current_profile_file_path).expect("Failed to load current profile!");
+    let current_profile_file = profile::load_profile_file(&current_profile_file_path)
+        .expect("Failed to load current profile!");
     // Execute the given subcommand
     match matches.subcommand_name() {
         Some("profile") => {
             // Check the given subcommand
-            let subcommand_matches = matches.subcommand_matches("profile").unwrap();
+            let subcommand_matches = matches.subcommand_matches("profile")
+                .unwrap();
             // Select a given profile
             match subcommand_matches.subcommand_name() {
                 Some("list") | Some("ls") => {
-                    let paths = fs::read_dir(profiles_path).unwrap();
+                    let paths = fs::read_dir(profiles_path)
+                        .unwrap();
                     println!("Available profiles:");
                     for path in paths {
                         let file_name = path.unwrap().file_name();
@@ -84,27 +90,34 @@ fn main() {
                     }
                 }
                 Some("create") => {
-                    let subsubcommand_matches = subcommand_matches.subcommand_matches("create").unwrap();
-                    let new_profile_name = subsubcommand_matches.value_of("name").expect("Error reading name of new profile.");
+                    let subsubcommand_matches = subcommand_matches.subcommand_matches("create")
+                        .unwrap();
+                    let new_profile_name = subsubcommand_matches.value_of("name")
+                        .expect("Error reading name of new profile.");
                     let _new_profile = profile::load_profile_file(&format!("{}/{}", profiles_path, new_profile_name));
                     println!("Created profile {}", new_profile_name);
                 }
                 Some("select") => {
-                    let subsubcommand_matches = subcommand_matches.subcommand_matches("select").unwrap();
-                    let new_profile_name = subsubcommand_matches.value_of("name").expect("Error reading name of selected profile.");
+                    let subsubcommand_matches = subcommand_matches.subcommand_matches("select")
+                        .unwrap();
+                    let new_profile_name = subsubcommand_matches.value_of("name")
+                        .expect("Error reading name of selected profile.");
                     // Test that the new profile exists
                     if !Path::new(&format!("{}/{}", profiles_path, new_profile_name)).exists() {
                         println!("Profile {} does not exist!", new_profile_name);
                         exit(1);
                     } else {
                         config_file.current_profile = new_profile_name.to_string();
-                        confy::store_path(config_file_path, config_file).expect("Error saving configuration file!");
+                        confy::store_path(config_file_path, config_file)
+                            .expect("Error saving configuration file!");
                         println!("Switched to profile {}", new_profile_name);
                     }
                 }
                 Some("remove") | Some("rm") => {
-                    let subsubcommand_matches = subcommand_matches.subcommand_matches("select").unwrap();
-                    let target_profile_name = subsubcommand_matches.value_of("name").expect("Error reading name of selected profile.");
+                    let subsubcommand_matches = subcommand_matches.subcommand_matches("select")
+                        .unwrap();
+                    let target_profile_name = subsubcommand_matches.value_of("name")
+                        .expect("Error reading name of selected profile.");
                     // Ensure the user is not trying to remove their current profile
                     if target_profile_name == config_file.current_profile {
                         // The profile is currently in use
@@ -112,7 +125,8 @@ fn main() {
                         exit(1);
                     } else {
                         // The profile is not currently in use
-                        fs::remove_file(format!("{}/{}", profiles_path, target_profile_name)).expect(&format!("Error removing profile {}", target_profile_name));
+                        fs::remove_file(format!("{}/{}", profiles_path, target_profile_name))
+                            .expect(&format!("Error removing profile {}", target_profile_name));
                     }
 
                 }
@@ -159,7 +173,8 @@ fn main() {
             let modcache_path = format!("{}/mods/", &config_path);
             // Create mod cache directory if it doesn't exist
             if !Path::new(&modcache_path).exists() {
-                fs::create_dir_all(&modcache_path).expect("Failed to create path to mods cache. Ensure you have permissions to do this.");
+                fs::create_dir_all(&modcache_path)
+                    .expect("Failed to create path to mods cache. Ensure you have permissions to do this.");
             }
             // Search mod cache for modname
             println!("{}", mod_author);
