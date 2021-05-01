@@ -9,6 +9,7 @@ args:
       default_value: "~/.pipboy"
   - verbose:
       short: v
+      long: verbose
       help: Increase verbosity of output
 subcommands:
     - cache:
@@ -63,7 +64,9 @@ subcommands:
               help: The mod to install formatted author/mod
           - update:
               short: u
+              long: update
               help: Update package repository before attempting to install
           - force:
               short: f
+              long: force
               help: Ignore file conflicts and overwrite existing files
