@@ -22,11 +22,13 @@ use serde::{Serialize, Deserialize};
 #[derive(Serialize, Deserialize)]
 pub(crate) struct ConfigFile {
     pub(crate) current_profile: String,
+    pub(crate) repository_list: String,
 }
 /// `ConfigFile` implements `Default`
 impl std::default::Default for ConfigFile {
     fn default() -> Self { Self {
         current_profile: "Fallout New Vegas".into(),
+        repository_list: "pipboy.aayla.dev,other.repository".into(),
     }}
 }
 /// Returns a ConfigFile from a given path
