@@ -182,7 +182,7 @@ fn main() {
                 // Search the mod cache
                 if !mods::search_mod_cache(&config_path, &mod_value) {
                     // Mod does not exist locally and needs to be fetched
-                    println!("Mod not found locally. Attempting to fetch from repositories.");
+                    println!("{} not found locally. Attempting to fetch from repositories.", &mod_value);
                     remote::fetch_mod(&config_path, &config_file.repository_list, &mod_value);
                 }
                 // Test if the mod has an index file
@@ -204,6 +204,7 @@ fn main() {
                     }
                 }
                 // Install the mod
+                println!("Installed {}", &mod_value);
                 mods::install_mod(&config_path, &current_profile_file.install_path, &mod_value);
                 mods::log_files(&config_path, &config_file.current_profile, &mod_value, "install", matches.is_present("verbose")).expect("Failed to update file association dictionary.");
             }
