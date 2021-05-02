@@ -70,3 +70,9 @@ subcommands:
               short: f
               long: force
               help: "Ignore file conflicts and overwrite existing files (WARNING: THIS CAN CAUSE UNDEFINED BEHAVIOR)"
+    - uninstall:
+        about: Uninstall a mod
+        args:
+          - name:
+              required: true
+              help: The mod to uninstall formatted author/mod

@@ -207,7 +207,21 @@ fn main() {
             mods::log_files(&config_path, &config_file.current_profile, &mod_value, "install", matches.is_present("verbose")).expect("Failed to update file association dictionary.");
         }
         Some("uninstall") => {
-
+            let subcommand_matches = matches.subcommand_matches("uninstall")
+                .unwrap();
+            let mod_value = subcommand_matches.value_of("name")
+                .unwrap();
+            // Test that the mod has an index file
+            if !mods::mod_has_index(&config_path, &mod_value) {
+                // Test that a mod exists locally before trying to generate an index
+                if !mods::search_mod_cache(&config_path, &mod_value) {
+                    // Retrieve the mod
+                }
+                mods::generate_index(&config_path, &mod_value, matches.is_present("verbose")).expect("Failed to generate index file.");
+            }
+            // Uninstall the mod
+            mods::uninstall_mod(&config_path, &config_file.current_profile, &current_profile_file.install_path, &mod_value, matches.is_present("verbose"));
+            mods::log_files(&config_path, &config_file.current_profile, &mod_value, "uninstall", matches.is_present("verbose")).expect("Failed to update file ownership dictionary.");
         }
         _ => {
             println!("Command missing! Try with -h for more info.");

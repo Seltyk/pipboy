@@ -131,18 +131,23 @@ pub(crate) fn log_files(config_path: &str, current_profile: &str, mod_value: &st
     let index_path = format!("{}/mods/indices/{}/{}/index", &config_path, &mod_author, &mod_name);
     let dict_path = format!("{}/profiles/{}/file_associations.json", &config_path, &current_profile);
     // Test that files exist and create them if they don't
+    let mut dictionary = HashMap::new();
     if !Path::new(&dict_path).exists() {
         if verbose {
-            println!("File association dictionary does not exist. Creating.");
+            println!("File association dictionary does not exist. Creating new one.");
         }
-        // Create association dictionary
+    } else {
+        let j: String = fs::read_to_string(&dict_path).unwrap().parse().unwrap();
+        let dict_load: HashMap<String, String> = serde_json::from_str(&j).unwrap();
+        for item in dict_load {
+            dictionary.insert(item.0, item.1);
+        }
     }
     // Test that mod index exists
     if !Path::new(&index_path).exists() {
         // TODO: Generate mod index instead of failing
         return Err("Mod index does not exist");
     }
-    let mut dictionary = HashMap::new();
     // Load mod index
     let mod_index: String = fs::read_to_string(&index_path).unwrap().parse().unwrap();
     // Preform the appropriate action
@@ -162,6 +167,15 @@ pub(crate) fn log_files(config_path: &str, current_profile: &str, mod_value: &st
                 );
             }
         }
+        "uninstall" => {
+            for file in mod_index.lines() {
+                let file_string = file.to_string();
+                // Remove the value if it exists
+                if dictionary.contains_key(&file_string) && dictionary.get(&file_string).unwrap() == &mod_value {
+                    dictionary.remove(&file_string);
+                }
+            }
+        }
         _ => {
             println!("log_files() was called with an invalid action!");
             return Err("Invalid action");
@@ -171,4 +185,21 @@ pub(crate) fn log_files(config_path: &str, current_profile: &str, mod_value: &st
     let j = serde_json::to_string(&dictionary).unwrap();
     fs::write(&dict_path, &j).expect("Failed to serialize file association dictionary.");
     return Ok(());
+}
+
+pub(crate) fn uninstall_mod(config_path: &str, current_profile: &str, data_path: &str, mod_value: &str, verbose: bool) {
+    let mod_values = split_mod_value(mod_value);
+    // Load file ownership dictionary
+    let dict_path = format!("{}/profiles/{}/file_associations.json", &config_path, &current_profile);
+    let j: String = fs::read_to_string(&dict_path).unwrap().parse().unwrap();
+    let dictionary: HashMap<String, String> = serde_json::from_str(&j).unwrap();
+    for item in dictionary {
+        if &item.1 == &mod_value {
+            let remove_path = format!("{}/{}", &data_path, &item.0);
+            if verbose {
+                println!("Removing: {}", &remove_path);
+            }
+            fs::remove_file(&remove_path);
+        }
+    }
 }
