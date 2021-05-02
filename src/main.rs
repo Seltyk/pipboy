@@ -64,8 +64,8 @@ fn main() {
         Err(e) => panic!("Failed to load configuration file: {}", e),
     };
     // Get path to current profile
-    let profiles_path = format!("{}/profiles", config_path);
-    let current_profile_file_path = format!("{}/{}", &profiles_path, &config_file.current_profile);
+    let profiles_path = format!("{}/profiles/", config_path);
+    let current_profile_file_path = format!("{}/{}/profile", &profiles_path, &config_file.current_profile);
     let current_profile_file = profile::load_profile_file(&current_profile_file_path)
         .expect("Failed to load current profile!");
     // Execute the given subcommand
@@ -203,7 +203,8 @@ fn main() {
                 }
             }
             // Install the mod
-            mods::install_mod(&config_path, &current_profile_file.install_path, &mod_value)
+            mods::install_mod(&config_path, &current_profile_file.install_path, &mod_value);
+            mods::log_files(&config_path, &config_file.current_profile, &mod_value, "install", matches.is_present("verbose")).expect("Failed to update file association dictionary.");
         }
         Some("uninstall") => {
 

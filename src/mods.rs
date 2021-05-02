@@ -20,6 +20,7 @@ use std::fs;
 use std::fs::File;
 use std::io::Write;
 use substring::Substring;
+use std::collections::HashMap;
 
 use super::archives;
 
@@ -48,10 +49,9 @@ pub(crate) fn generate_index(config_path: &str, mod_value: &str, verbose: bool) 
         let mod_contents = archives::list_contents(&mod_path);
         let mut f = File::create(&index_path).expect("Cannot create index file! Ensure you have permission to do this.");
         for item in mod_contents {
-            if verbose {
-                println!("{}", item);
+            if &item.chars().last().unwrap() != &'/' {
+                f.write(format!("{}\n", item).as_bytes()).expect("Failed to write index file!");
             }
-            f.write(format!("{}\n", item).as_bytes()).expect("Failed to write index file!");
         }
         Ok(())
     } else {
@@ -122,4 +122,53 @@ pub(crate) fn test_file_conflicts(config_path: &str, mod_value: &str, data_path:
         }
     }
     Ok(())
+}
+
+pub(crate) fn log_files(config_path: &str, current_profile: &str, mod_value: &str, action: &str, verbose: bool) -> Result<(), &'static str> {
+    let mod_values = split_mod_value(mod_value);
+    let mod_author = &mod_values[0];
+    let mod_name = &mod_values[1];
+    let index_path = format!("{}/mods/indices/{}/{}/index", &config_path, &mod_author, &mod_name);
+    let dict_path = format!("{}/profiles/{}/file_associations.json", &config_path, &current_profile);
+    // Test that files exist and create them if they don't
+    if !Path::new(&dict_path).exists() {
+        if verbose {
+            println!("File association dictionary does not exist. Creating.");
+        }
+        // Create association dictionary
+    }
+    // Test that mod index exists
+    if !Path::new(&index_path).exists() {
+        // TODO: Generate mod index instead of failing
+        return Err("Mod index does not exist");
+    }
+    let mut dictionary = HashMap::new();
+    // Load mod index
+    let mod_index: String = fs::read_to_string(&index_path).unwrap().parse().unwrap();
+    // Preform the appropriate action
+    match action {
+        "install" => {
+            for file in mod_index.lines() {
+                let file_string = file.to_string();
+                // Remove the value if the file was already in use by another mod
+                if dictionary.contains_key(&file_string) {
+                    
+                    dictionary.remove(&file_string);
+                }
+                // Define the file's owner
+                dictionary.insert(
+                    file_string,
+                    mod_value.to_string(),
+                );
+            }
+        }
+        _ => {
+            println!("log_files() was called with an invalid action!");
+            return Err("Invalid action");
+        }
+    }
+    // Serialize the dictionary
+    let j = serde_json::to_string(&dictionary).unwrap();
+    fs::write(&dict_path, &j).expect("Failed to serialize file association dictionary.");
+    return Ok(());
 }
