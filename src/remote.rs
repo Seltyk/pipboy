@@ -15,6 +15,11 @@
 // You should have received a copy of the GNU General Public License
 // along with pipboy.  If not, see <http://www.gnu.org/licenses/>.
 
+use reqwest;
+use std::fs;
+use std::path::Path;
+use reqwest::blocking::Response;
+
 /// Get the package index of a remote repository
 pub(crate) fn get_index(remote: &str) {
     let index_path = format!("Updated index for: https://{}/index.json", remote);
@@ -28,4 +33,21 @@ pub(crate) fn get_repositories(csv: &str) -> Vec<String> {
         vec.push(repo.to_string());
     }
     return vec;
+}
+
+pub(crate) fn fetch_mod(config_path: &str, remotes: &str, mod_value: &str) {
+    let remotes = get_repositories(&remotes);
+    for server in remotes {
+        let url = format!("https://{}/mods/{}/mod.tar.gz", &server, &mod_value);
+        let res = reqwest::blocking::get(&url).unwrap();
+        if res.status().is_success() {
+            // The mod was found. Download the mod.
+            println!("{} was found at {}", &mod_value, &server);
+            let path = format!("{}/mods/cached/{}/", &config_path, &mod_value);
+            if !Path::new(&path).exists() {
+                fs::create_dir_all(&path).expect("Failed to create path for mod");
+            }
+            fs::write(&format!("{}/mod.tar.gz", &path), res.bytes().unwrap()).expect("Failed to write mod to disk.");
+        }
+    }
 }

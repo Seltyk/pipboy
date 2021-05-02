@@ -61,6 +61,7 @@ subcommands:
         args:
           - name:
               required: true
+              multiple: true
               help: The mod to install formatted author/mod
           - update:
               short: u
@@ -75,4 +76,5 @@ subcommands:
         args:
           - name:
               required: true
+              multiple: true
               help: The mod to uninstall formatted author/mod

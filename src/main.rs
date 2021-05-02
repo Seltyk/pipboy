@@ -174,54 +174,56 @@ fn main() {
                     remote::get_index(&repo);
                 }
             }
-            let mod_value = subcommand_matches.value_of("name")
-                .unwrap();
-            // Split modvalue into author and name
-            let mod_values = mods::split_mod_value(mod_value);
-            let mod_author = &mod_values[0];
-            let mod_name = &mod_values[1];
-            // Search the mod cache
-            if !mods::search_mod_cache(&config_path, &mod_value) {
-                // Mod does not exist locally and needs to be fetched
-            }
-            // Test if the mod has an index file
-            if !mods::mod_has_index(&config_path, &mod_value) {
-                // Mod does not have a file index. Generate before install.
-                mods::generate_index(&config_path, &mod_value, matches.is_present("verbose"))
-                    .expect("This error shouldn't be possible");
-            } else {
-                if matches.is_present("verbose") {
-                    println!("Mod {}/{} already has an index file", &mod_author, &mod_name);
+            for mod_value in subcommand_matches.values_of("name").unwrap() {
+                // Split modvalue into author and name
+                let mod_values = mods::split_mod_value(mod_value);
+                let mod_author = &mod_values[0];
+                let mod_name = &mod_values[1];
+                // Search the mod cache
+                if !mods::search_mod_cache(&config_path, &mod_value) {
+                    // Mod does not exist locally and needs to be fetched
+                    println!("Mod not found locally. Attempting to fetch from repositories.");
+                    remote::fetch_mod(&config_path, &config_file.repository_list, &mod_value);
                 }
-            }
-            // Check for file conflicts
-            if !subcommand_matches.is_present("force") {
-                mods::test_file_conflicts(&config_path, &mod_value, &current_profile_file.install_path, matches.is_present("verbose")).expect("Error checking for file conflicts");
-            } else {
-                if matches.is_present("verbose") {
-                    println!("Skipping file conflict testing");
+                // Test if the mod has an index file
+                if !mods::mod_has_index(&config_path, &mod_value) {
+                    // Mod does not have a file index. Generate before install.
+                    mods::generate_index(&config_path, &mod_value, matches.is_present("verbose"))
+                        .expect("This error shouldn't be possible");
+                } else {
+                    if matches.is_present("verbose") {
+                        println!("Mod {}/{} already has an index file", &mod_author, &mod_name);
+                    }
                 }
+                // Check for file conflicts
+                if !subcommand_matches.is_present("force") {
+                    mods::test_file_conflicts(&config_path, &mod_value, &current_profile_file.install_path, matches.is_present("verbose")).expect("Error checking for file conflicts");
+                } else {
+                    if matches.is_present("verbose") {
+                        println!("Skipping file conflict testing");
+                    }
+                }
+                // Install the mod
+                mods::install_mod(&config_path, &current_profile_file.install_path, &mod_value);
+                mods::log_files(&config_path, &config_file.current_profile, &mod_value, "install", matches.is_present("verbose")).expect("Failed to update file association dictionary.");
             }
-            // Install the mod
-            mods::install_mod(&config_path, &current_profile_file.install_path, &mod_value);
-            mods::log_files(&config_path, &config_file.current_profile, &mod_value, "install", matches.is_present("verbose")).expect("Failed to update file association dictionary.");
         }
         Some("uninstall") => {
             let subcommand_matches = matches.subcommand_matches("uninstall")
                 .unwrap();
-            let mod_value = subcommand_matches.value_of("name")
-                .unwrap();
-            // Test that the mod has an index file
-            if !mods::mod_has_index(&config_path, &mod_value) {
-                // Test that a mod exists locally before trying to generate an index
-                if !mods::search_mod_cache(&config_path, &mod_value) {
-                    // Retrieve the mod
+                for mod_value in subcommand_matches.values_of("name").unwrap() {
+                // Test that the mod has an index file
+                if !mods::mod_has_index(&config_path, &mod_value) {
+                    // Test that a mod exists locally before trying to generate an index
+                    if !mods::search_mod_cache(&config_path, &mod_value) {
+                        remote::fetch_mod(&config_path, &config_file.repository_list, &mod_value);
+                    }
+                    mods::generate_index(&config_path, &mod_value, matches.is_present("verbose")).expect("Failed to generate index file.");
                 }
-                mods::generate_index(&config_path, &mod_value, matches.is_present("verbose")).expect("Failed to generate index file.");
+                // Uninstall the mod
+                mods::uninstall_mod(&config_path, &config_file.current_profile, &current_profile_file.install_path, &mod_value, matches.is_present("verbose"));
+                mods::log_files(&config_path, &config_file.current_profile, &mod_value, "uninstall", matches.is_present("verbose")).expect("Failed to update file ownership dictionary.");
             }
-            // Uninstall the mod
-            mods::uninstall_mod(&config_path, &config_file.current_profile, &current_profile_file.install_path, &mod_value, matches.is_present("verbose"));
-            mods::log_files(&config_path, &config_file.current_profile, &mod_value, "uninstall", matches.is_present("verbose")).expect("Failed to update file ownership dictionary.");
         }
         _ => {
             println!("Command missing! Try with -h for more info.");
