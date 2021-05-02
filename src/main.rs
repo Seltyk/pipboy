@@ -71,7 +71,7 @@ fn main() {
     // Get list of currently installed mods
     let mut installed_mods = Vec::new();
     for item in current_profile_file.install_path.split(",") {
-        installed_mods.push(item);
+        installed_mods.push(item.to_string().clone());
     }
     // Execute the given subcommand
     match matches.subcommand_name() {
@@ -182,7 +182,7 @@ fn main() {
             let mut mod_queue = Vec::new();
             // Collect requested mods into vector
             for mod_value in subcommand_matches.values_of("name").unwrap() {
-                mod_queue.push(mod_value);
+                mod_queue.push(mod_value.to_string().clone());
             }
             // Install mods
             loop {
@@ -207,6 +207,8 @@ fn main() {
                     // Mod does not exist locally and needs to be fetched
                     println!("{} not found locally. Attempting to fetch from repositories.", &mod_value);
                     remote::fetch_mod(&config_path, &config_file.repository_list, &mod_value);
+                } else {
+                    println!("Using local cached version of {}", &mod_value);
                 }
                 // Test if the mod has an index file
                 if !mods::mod_has_index(&config_path, &mod_value) {
@@ -233,9 +235,14 @@ fn main() {
                 // Push dependencies to stack
                 let depends = remote::fetch_mod_depends(&config_path, &config_file.repository_list, &mod_value);
                 for item in depends {
-                    mod_queue.push(&item);
+                    println!("{} depends on {}", &mod_value, &item);
+                    mod_queue.push(item);
                 }
+                installed_mods.push(mod_value);
             }
+            // Update profile
+            confy::store_path(current_profile_file_path, current_profile_file)
+                .expect("Error saving configuration file!");
         }
         Some("uninstall") => {
             let subcommand_matches = matches.subcommand_matches("uninstall")
