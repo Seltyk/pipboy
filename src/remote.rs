@@ -51,3 +51,19 @@ pub(crate) fn fetch_mod(config_path: &str, remotes: &str, mod_value: &str) {
         }
     }
 }
+
+pub(crate) fn fetch_mod_depends(config_path: &str, remotes: &str, mod_value: &str) -> Vec<String> {
+    let mut return_vector = Vec::new();
+    let remotes = get_repositories(&remotes);
+    for server in remotes {
+        let url = format!("https://{}/mods/{}/depends.txt", &server, &mod_value);
+        let res = reqwest::blocking::get(&url).unwrap();
+        if res.status().is_success() {
+            let body = res.text().unwrap();
+            for dependency in body.lines() {
+                return_vector.push(dependency.to_string());
+            }
+        }
+    }
+    return return_vector;
+}

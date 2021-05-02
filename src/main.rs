@@ -68,6 +68,11 @@ fn main() {
     let current_profile_file_path = format!("{}/{}/profile", &profiles_path, &config_file.current_profile);
     let current_profile_file = profile::load_profile_file(&current_profile_file_path)
         .expect("Failed to load current profile!");
+    // Get list of currently installed mods
+    let mut installed_mods = Vec::new();
+    for item in current_profile_file.install_path.split(",") {
+        installed_mods.push(item);
+    }
     // Execute the given subcommand
     match matches.subcommand_name() {
         Some("profile") => {
@@ -174,12 +179,30 @@ fn main() {
                     remote::get_index(&repo);
                 }
             }
+            let mut mod_queue = Vec::new();
+            // Collect requested mods into vector
             for mod_value in subcommand_matches.values_of("name").unwrap() {
+                mod_queue.push(mod_value);
+            }
+            // Install mods
+            loop {
+                // Break out of the loop if finished
+                if mod_queue.len() == 0 {
+                    break;
+                }
+                // Get current mod from the top of the vector
+                let mod_value = mod_queue.pop().unwrap();
                 // Split modvalue into author and name
-                let mod_values = mods::split_mod_value(mod_value);
+                let mod_values = mods::split_mod_value(&mod_value);
                 let mod_author = &mod_values[0];
                 let mod_name = &mod_values[1];
-                // Search the mod cache
+                // Test if mod is already installed
+                if installed_mods.contains(&mod_value) {
+                    // Skip mod if it's already installed
+                    println!("{} is already installed.", &mod_value);
+                    continue;
+                }
+                // Search the mod cache for the current mod
                 if !mods::search_mod_cache(&config_path, &mod_value) {
                     // Mod does not exist locally and needs to be fetched
                     println!("{} not found locally. Attempting to fetch from repositories.", &mod_value);
@@ -207,6 +230,11 @@ fn main() {
                 println!("Installed {}", &mod_value);
                 mods::install_mod(&config_path, &current_profile_file.install_path, &mod_value);
                 mods::log_files(&config_path, &config_file.current_profile, &mod_value, "install", matches.is_present("verbose")).expect("Failed to update file association dictionary.");
+                // Push dependencies to stack
+                let depends = remote::fetch_mod_depends(&config_path, &config_file.repository_list, &mod_value);
+                for item in depends {
+                    mod_queue.push(&item);
+                }
             }
         }
         Some("uninstall") => {
