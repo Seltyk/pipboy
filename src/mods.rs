@@ -188,7 +188,6 @@ pub(crate) fn log_files(config_path: &str, current_profile: &str, mod_value: &st
 }
 
 pub(crate) fn uninstall_mod(config_path: &str, current_profile: &str, data_path: &str, mod_value: &str, verbose: bool) {
-    let mod_values = split_mod_value(mod_value);
     // Load file ownership dictionary
     let dict_path = format!("{}/profiles/{}/file_associations.json", &config_path, &current_profile);
     let j: String = fs::read_to_string(&dict_path).unwrap().parse().unwrap();
