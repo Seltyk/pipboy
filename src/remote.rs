@@ -51,7 +51,8 @@ pub(crate) fn fetch_mod(config_path: &str, remotes: &str, mod_value: &str) {
     }
 }
 
-pub(crate) fn fetch_mod_depends(config_path: &str, remotes: &str, mod_value: &str) -> Vec<String> {
+pub(crate) fn fetch_mod_depends(_config_path: &str, remotes: &str, mod_value: &str) -> Vec<String> {
+    // TODO: Use game name from profile from remote
     let mut return_vector = Vec::new();
     let remotes = get_repositories(&remotes);
     for server in remotes {
