@@ -51,6 +51,9 @@ pub(crate) fn generate_index(config_path: &str, mod_value: &str, verbose: bool) 
         for item in mod_contents {
             if &item.chars().last().unwrap() != &'/' {
                 f.write(format!("{}\n", item).as_bytes()).expect("Failed to write index file!");
+                if verbose {
+                    println!("{}", &item);
+                }
             }
         }
         Ok(())
