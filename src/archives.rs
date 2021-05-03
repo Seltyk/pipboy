@@ -19,12 +19,8 @@ use std::fs::File;
 use std::error::Error;
 use tar::Archive;
 
-pub(crate) fn create_tarball(tarball_path: &str, input_files: &str) -> Result<(), std::io::Error> {
-    // Create a tarball containing input_files at the given tarball_path
-    let tar_gz = File::create(tarball_path)?;
-    // let enc = GzEncoder::new(tar_gz, Compression::default());
-    let mut tar = tar::Builder::new(Vec::new());
-    tar.append_dir_all("backup/", input_files).unwrap();
+pub(crate) fn create_tarball(_tarball_path: &str, _input_files: &str) -> Result<(), std::io::Error> {
+    // TODO: Reimplement this function
     Ok(())
 }
 
