@@ -18,7 +18,6 @@
 use reqwest;
 use std::fs;
 use std::path::Path;
-use reqwest::blocking::Response;
 
 /// Get the package index of a remote repository
 pub(crate) fn get_index(remote: &str) {
