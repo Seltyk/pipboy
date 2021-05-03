@@ -23,12 +23,14 @@ use serde::{Serialize, Deserialize};
 pub(crate) struct ProfileFile {
     pub(crate) install_path: String,
     pub(crate) enabled_mods: String,
+    pub(crate) game: String,
 }
 /// `ProfileFile` implements `Default`
 impl std::default::Default for ProfileFile {
     fn default() -> Self { Self {
         install_path: "path/to/fallout/install/".into(),
         enabled_mods: "".into(),
+        game: "Fallout: New Vegas".into(),
     }}
 }
 
