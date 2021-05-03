@@ -198,7 +198,7 @@ pub(crate) fn uninstall_mod(config_path: &str, current_profile: &str, data_path:
             if verbose {
                 println!("Removing: {}", &remove_path);
             }
-            fs::remove_file(&remove_path);
+            fs::remove_file(&remove_path).expect(&format!("Failed to remove file {}", &remove_path));
         }
     }
 }
