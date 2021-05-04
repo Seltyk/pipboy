@@ -19,6 +19,7 @@ use std::error::Error;
 use confy;
 use serde::{Serialize, Deserialize};
 use std::fs;
+use std::path::Path;
 
 use super::config_file;
 
@@ -59,5 +60,24 @@ pub(crate) fn list_profiles(config_path: &str) {
         } else {
             print!("\n");
         }
+    }
+}
+
+fn profile_exists(config_path: &str, profile_name: &str) -> bool {
+    false
+}
+
+pub(crate) fn create_profile(config_path: &str, profile_name: &str) {
+    // Ensure the profile doesn't already exist before attempting to create it
+    if !profile_exists(&config_path, &profile_name) {
+        // Define the path to the new profile
+        let profile_path = format!("{}/profiles/{}/profile", &config_path, &profile_name);
+        // Create prerequisite path
+        if !Path::new(&profile_path).parent().unwrap().exists() {
+            fs::create_dir_all(&profile_path).expect("Failed to create directories for profile");
+        }
+        load_profile_file(&profile_path).expect("Failed to create new profile!");
+    } else {
+        println!("Profile {} already exists!", &profile_name);
     }
 }
