@@ -75,13 +75,13 @@ pub(crate) fn create_profile(config_path: &str, profile_name: &str) -> Result<()
         let profile_path = format!("{}/profiles/{}/profile", &config_path, &profile_name);
         // Create prerequisite path
         if !Path::new(&profile_path).parent().unwrap().exists() {
-            let result = match fs::create_dir_all(&profile_path) {
+            match fs::create_dir_all(&profile_path) {
                 Ok(_result) => _result,
-                Err(error) => return Err("Error creating directories")
+                Err(_error) => return Err("Error creating directories")
             };
         }
         match load_profile_file(&profile_path) {
-            Ok(profile) => return Ok(()),
+            Ok(_profile) => return Ok(()),
             Err(_failiure) => return Err("Error writing file")
         };
     } else {
