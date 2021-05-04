@@ -19,6 +19,8 @@ use std::error::Error;
 use confy;
 use serde::{Serialize, Deserialize};
 
+use super::profile;
+
 #[derive(Serialize, Deserialize)]
 pub(crate) struct ConfigFile {
     pub(crate) current_profile: String,
@@ -43,4 +45,28 @@ pub(crate) fn load_config_file(config_path: &str) -> Result<ConfigFile, Box<dyn 
     let config:ConfigFile = confy::load_path(config_path)?;
     // Return config
     Ok(config)
+}
+
+pub(crate) fn save_config_file(config_path: &str, new_config: ConfigFile) -> Result<(), &'static str> {
+    return match confy::store_path(&format!("{}/config", &config_path), &new_config) {
+        Ok(_result) => Ok(()),
+        Err(_error) => Err("Failed to save config file.")
+    }
+}
+
+pub(crate) fn select_profile(config_path: &str, new_profile: &str) -> Result<(), &'static str> {
+    if profile::profile_exists(&config_path, &new_profile) {
+        // Load configuration file
+        let mut config_file = match load_config_file(&config_path) {
+            Ok(config) => config,
+            Err(_error) => return Err("Failed to load config file")
+        };
+        config_file.current_profile = new_profile.to_string();
+        return  match save_config_file(config_path, config_file) {
+            Ok(_result) => Ok(()),
+            Err(_error) => Err(_error)
+        }
+    } else {
+        return Err("Profile does not exist!");
+    }
 }

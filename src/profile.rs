@@ -63,7 +63,7 @@ pub(crate) fn list_profiles(config_path: &str) {
     }
 }
 
-fn profile_exists(config_path: &str, profile_name: &str) -> bool {
+pub(crate) fn profile_exists(config_path: &str, profile_name: &str) -> bool {
     return Path::new(&format!("{}/profiles/{}/profile", 
         &config_path, &profile_name)).exists();
 }

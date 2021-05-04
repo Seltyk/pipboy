@@ -96,16 +96,11 @@ fn main() {
                         .unwrap();
                     let new_profile_name = subsubcommand_matches.value_of("name")
                         .expect("Error reading name of selected profile.");
-                    // Test that the new profile exists
-                    if !Path::new(&format!("{}/{}", profiles_path, new_profile_name)).exists() {
-                        println!("Profile {} does not exist!", new_profile_name);
-                        exit(1);
-                    } else {
-                        config_file.current_profile = new_profile_name.to_string();
-                        confy::store_path(config_file_path, config_file)
-                            .expect("Error saving configuration file!");
-                        println!("Switched to profile {}", new_profile_name);
+                    exit(match config_file::select_profile(&config_path, &new_profile_name) {
+                        Ok(_result) => 0,
+                        Err(error) => {println!("Failed to change profile: {}", error); 1}
                     }
+                );
                 }
                 Some("remove") | Some("rm") => {
                     let subsubcommand_matches = subcommand_matches.subcommand_matches("select")
