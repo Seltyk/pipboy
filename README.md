@@ -11,8 +11,8 @@ A mod manager for Fallout: New Vegas
     2. [Profile File Values](#profile-file-values)
 3. [Caches](#caches)
 4. [Installing Mods](#installing-mods)
-   1. [Force installation](#force-installation)
-   2. [Mod file ownership](#mod-file-ownership)
+   1. [Force Installation](#force-installation)
+   2. [Mod File Ownership](#mod-file-ownership)
 5. [Uninstalling Mods](#uninstalling-mods)
 
 ## Configuration
@@ -52,7 +52,7 @@ repository_list = 'pipboy.aayla.dev'
 ```
 The meaning of each value is:
 1. current_profile: The current profile in use by pipboy. This is primarly used to maintain state between command executions and probably shouldn't be edited manually.
-2. repository_list: The list of remote repositories to search for packages in.
+2. repository_list: The list of remote repositories to search for packages in represented as a comma-separated list of domain names.
 
 ## Profiles
 
@@ -156,5 +156,25 @@ The meaning of each value is:
 3. game: The game associated with this profile. By default, Fallout: New Vegas as that is the game pipboy was designed with in mind.
 
 ### Caches
+
 Currently unimplemented
 
+### Installing Mods
+
+Once the pipboy configuration file and relevant profile have been set up, mods can be installed. This is done by passing the `install` subcommand to pipboy with the mod names as trailing positional arguments. Mods are written in the format `{author}/{mod_name}`. For example, to install MTUI by Max Tael, you would run the command `pipboy install max-tael/mtui`.
+```
+pipboy-install 
+Install a mod
+
+USAGE:
+    pipboy install [FLAGS] <name>...
+
+FLAGS:
+    -f, --force      Ignore file conflicts and overwrite existing files (WARNING: THIS CAN CAUSE UNDEFINED BEHAVIOR)
+    -h, --help       Prints help information
+    -u, --update     Update package repository before attempting to install
+    -V, --version    Prints version information
+
+ARGS:
+    <name>...    The mod to install formatted author/mod
+```
