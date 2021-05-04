@@ -154,3 +154,7 @@ The meaning of each value is:
 1. install_path: The path to the installation of the modded game. From my configuration as an example, `/mnt/Games/SteamLibrary/steamapps/common/Fallout New Vegas`
 2. enabled_mods: Currently unimplemented
 3. game: The game associated with this profile. By default, Fallout: New Vegas as that is the game pipboy was designed with in mind.
+
+### Caches
+Currently unimplemented
+
