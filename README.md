@@ -178,3 +178,7 @@ FLAGS:
 ARGS:
     <name>...    The mod to install formatted author/mod
 ```
+
+### Force Installation
+
+By default, pipboy will refuse to install a mod if doing so would involve overwriting an already-existing file. Pipboy assumes that mod authors have only included files in their mod that are actually important to the functioning of the mod. However, this check can be skipped by passing the `-f / --force` flag and any conflicting files will be overwritten by the newer mod.
