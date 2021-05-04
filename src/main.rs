@@ -92,8 +92,7 @@ fn main() {
                     exit(match profile::create_profile(&config_path, &new_profile_name) {
                         Ok(_result) => 0,
                         Err(problem) => {println!("Failed to create new profile: {}", problem); 1 }
-                    }
-                );
+                    });
                 }
                 Some("select") => {
                     let subsubcommand_matches = subcommand_matches.subcommand_matches("select")
