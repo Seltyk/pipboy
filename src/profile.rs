@@ -82,7 +82,7 @@ pub(crate) fn create_profile(config_path: &str, profile_name: &str) -> Result<()
         }
         match load_profile_file(&profile_path) {
             Ok(_profile) => return Ok(()),
-            Err(_failiure) => return Err("Error writing file")
+            Err(_failure) => return Err("Error writing file")
         };
     } else {
         println!("Profile {} already exists!", &profile_name);
