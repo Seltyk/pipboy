@@ -18,6 +18,9 @@
 use std::error::Error;
 use confy;
 use serde::{Serialize, Deserialize};
+use std::fs;
+
+use super::config_file;
 
 #[derive(Serialize, Deserialize)]
 pub(crate) struct ProfileFile {
@@ -39,4 +42,22 @@ pub(crate) fn load_profile_file(profile_path: &str) -> Result<ProfileFile, Box<d
     let profile:ProfileFile = confy::load_path(profile_path)?;
     // Return config
     Ok(profile)
+}
+
+pub(crate) fn list_profiles(config_path: &str) {
+    let config_file = config_file::load_config_file(&format!("{}/config", &config_path))
+        .unwrap();
+    let paths = fs::read_dir(format!("{}/profiles/", &config_path))
+        .unwrap();
+    println!("Available profiles:");
+    for path in paths {
+        let file_name = path.unwrap().file_name();
+        print!("Profile: {:?}", file_name);
+        // Display an indicator next to the current profile
+        if file_name.to_str().unwrap() == &config_file.current_profile {
+            print!(" [*]\n");
+        } else {
+            print!("\n");
+        }
+    }
 }

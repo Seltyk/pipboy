@@ -82,19 +82,7 @@ fn main() {
             // Select a given profile
             match subcommand_matches.subcommand_name() {
                 Some("list") | Some("ls") => {
-                    let paths = fs::read_dir(profiles_path)
-                        .unwrap();
-                    println!("Available profiles:");
-                    for path in paths {
-                        let file_name = path.unwrap().file_name();
-                        print!("Profile: {:?}", file_name);
-                        // Display an indicator next to the current profile
-                        if file_name.to_str().unwrap() == &config_file.current_profile {
-                            print!(" [*]\n");
-                        } else {
-                            print!("\n");
-                        }
-                    }
+                    profile::list_profiles(&config_path);
                 }
                 Some("create") => {
                     let subsubcommand_matches = subcommand_matches.subcommand_matches("create")
