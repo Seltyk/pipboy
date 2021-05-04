@@ -89,7 +89,11 @@ fn main() {
                         .unwrap();
                     let new_profile_name = subsubcommand_matches.value_of("name")
                         .expect("Error reading name of new profile.");
-                    profile::create_profile(&config_path, &new_profile_name)
+                    exit(match profile::create_profile(&config_path, &new_profile_name) {
+                        Ok(_result) => 0,
+                        Err(problem) => {println!("Failed to create new profile: {}", problem); 1 }
+                    }
+                );
                 }
                 Some("select") => {
                     let subsubcommand_matches = subcommand_matches.subcommand_matches("select")

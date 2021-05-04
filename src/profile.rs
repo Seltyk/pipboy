@@ -68,17 +68,24 @@ pub(crate) fn profile_exists(config_path: &str, profile_name: &str) -> bool {
         &config_path, &profile_name)).exists();
 }
 
-pub(crate) fn create_profile(config_path: &str, profile_name: &str) {
+pub(crate) fn create_profile(config_path: &str, profile_name: &str) -> Result<(), &'static str> {
     // Ensure the profile doesn't already exist before attempting to create it
     if !profile_exists(&config_path, &profile_name) {
         // Define the path to the new profile
         let profile_path = format!("{}/profiles/{}/profile", &config_path, &profile_name);
         // Create prerequisite path
         if !Path::new(&profile_path).parent().unwrap().exists() {
-            fs::create_dir_all(&profile_path).expect("Failed to create directories for profile");
+            let result = match fs::create_dir_all(&profile_path) {
+                Ok(_result) => _result,
+                Err(error) => return Err("Error creating directories")
+            };
         }
-        load_profile_file(&profile_path).expect("Failed to create new profile!");
+        match load_profile_file(&profile_path) {
+            Ok(profile) => return Ok(()),
+            Err(_failiure) => return Err("Error writing file")
+        };
     } else {
         println!("Profile {} already exists!", &profile_name);
     }
+    Ok(())
 }
