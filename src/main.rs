@@ -199,6 +199,7 @@ fn main() {
             let subcommand_matches = matches.subcommand_matches("uninstall")
                 .unwrap();
             for mod_value in subcommand_matches.values_of("name").unwrap() {
+                // Remove the mod
                 match mods::uninstall_mod(&config_path, &mod_value) {
                     Ok(_) => { println!("Uninstalled {}", &mod_value) },
                     Err(issue) => {
@@ -206,6 +207,13 @@ fn main() {
                         exit(1)
                     }
                 }
+                // Update file ownership dictionary
+                match file_ownership::uninstallation_update(&config_path, &mod_value) {
+                    Ok(_) => { println!("Updated file ownership table.") },
+                    Err(issue) => { println!("Failed to update file ownership table <- {}", issue); exit(1) }
+                };
+                // Remove mod from profile vector
+                
             }
         }
         _ => {

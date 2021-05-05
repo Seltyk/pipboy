@@ -93,3 +93,27 @@ pub(crate) fn installation_update(config_path: &str, mod_value: &str, verbose: &
         Err(issue) => return Err(format!("Failed to save ownership dictionary <- {}", issue))
     };
 }
+
+pub(crate) fn uninstallation_update(config_path: &str, mod_value: &str) -> Result<(), String> {
+    // Get existing HashMap
+    let mut ownership_map = match load_ownership_hashmap(&config_path) {
+        Ok(map) => map,
+        Err(issue) => return Err(format!("Failed to load file ownership table <- {}", issue))
+    };
+    // Get index for mod
+    let mod_index = match mods::load_index(&config_path, &mod_value) {
+        Ok(index) => index,
+        Err(issue) => return Err(format!("Failed to get mod index <- {}", issue))
+    };
+    for file in mod_index.lines() {
+        if ownership_map.contains_key(&*file) {
+            if ownership_map.get(&*file).unwrap() == &mod_value {
+                ownership_map.remove(&*file);
+            }
+        }
+    }
+    return match save_ownership_hashmap(&config_path, ownership_map) {
+        Ok(_) => Ok(()),
+        Err(issue) => Err(format!("Failed to save ownership table <- {}", issue))
+    }
+}
