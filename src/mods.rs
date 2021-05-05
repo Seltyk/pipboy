@@ -23,17 +23,67 @@ use substring::Substring;
 use std::collections::HashMap;
 
 use super::archives;
+use super::profile;
+use super::config_file;
+use super::remote;
 
-pub(crate) fn install_mod(config_path: &str, data_path: &str, mod_value: &str) {
-    let mod_values = split_mod_value(mod_value);
-    let mod_author = &mod_values[0];
-    let mod_name = &mod_values[1];
+pub(crate) fn install_mod(config_path: &str, mod_value: &str, verbose: &bool, force: &bool) -> Result<(), String> {
+    // Get current profile
+    let profile_name = match config_file::current_profile(&config_path) {
+        Ok(value) => value,
+        Err(issue) => return Err(format!("Failed to get current profile <- {}", issue))
+    };
+    // Load profile file
+    let profile = match profile::load_profile_file(&format!("{}/profiles/{}/profile", &config_path, &profile_name)) {
+        Ok(value) => value,
+        Err(_) => return Err("Failed to load profile file".to_string())
+    };
+    // Test if mod is already installed
+    match mod_is_installed(&config_path, &mod_value) {
+        Ok(result) => match result {
+            true => return Err("Mod is already installed!".to_string()),
+            false => {}
+        }
+        Err(issue) => return Err(format!("Failed to test if mod is already installed <- {}", issue))
+    };
+    // Check if the mod is cached locally
+    match mod_is_cached(&config_path, &mod_value) {
+        Ok(value) => match value {
+            // Use local cache if present
+            true => { println!("Using locally cached version of {}", &mod_value) },
+            // Download mod if not present
+            false => match remote::fetch_mod(&config_path, &mod_value) {
+                Ok(_) => { println!("Downloaded {} from remote server", &mod_value) }
+                Err(issue) => return Err(format!("Failed to fetch mod from remote server <- {}", issue))
+            },
+        },
+        Err(issue) => return Err(format!("Failed to search mod cache <- {}", issue))
+    };
+    // Create an index file if the mod does not have one
+    if !mod_has_index(&config_path, &mod_value) {
+        generate_index(&config_path, &mod_value, &verbose);
+    }
+    // Check for file conflits
+    match *force {
+        false => match test_file_conflicts(&config_path, &mod_value, &verbose) {
+            Ok(value) => match value {
+                // File conflict detected
+                true => return Err("File conflict detected!".to_string()),
+                false => { }
+            },
+            Err(issue) => return Err(format!("Failed to test for file conflicts <- {}", issue))
+        },
+        true => println!("Force flag given. Skipping testing for file conflicts.")
+    };
     // Install the mod
-    let tarball_path = format!("{}/mods/cached/{}/{}/mod.tar.gz", &config_path, &mod_author, &mod_name);
-    archives::unpack_tarball(&tarball_path, &data_path).expect("Failed to extract mod! Ensure you have the permissions to do this.");
+    let tarball_path = format!("{}/mods/cached/{}/mod.tar.gz", &config_path, &mod_value);
+    return match archives::unpack_tarball(&tarball_path, &profile.install_path) {
+        Ok(_) => Ok(()),
+        Err(_) => Err("Failed to extract tarball!".to_string())
+    };
 }
 
-pub(crate) fn generate_index(config_path: &str, mod_value: &str, verbose: bool) -> Result<(), &'static str> {
+pub(crate) fn generate_index(config_path: &str, mod_value: &str, verbose: &bool) -> Result<(), &'static str> {
     let mod_values = split_mod_value(mod_value);
     let mod_author = &mod_values[0];
     let mod_name = &mod_values[1];
@@ -51,7 +101,7 @@ pub(crate) fn generate_index(config_path: &str, mod_value: &str, verbose: bool) 
         for item in mod_contents {
             if &item.chars().last().unwrap() != &'/' {
                 f.write(format!("{}\n", item).as_bytes()).expect("Failed to write index file!");
-                if verbose {
+                if *verbose {
                     println!("{}", &item);
                 }
             }
@@ -79,59 +129,76 @@ pub(crate) fn split_mod_value(mod_value: &str) -> Vec<String> {
     return vec;
 }
 
-pub(crate) fn search_mod_cache(config_path: &str, mod_value: &str) -> bool {
-    let mod_values = split_mod_value(mod_value);
-    let mod_author = &mod_values[0];
-    let mod_name = &mod_values[1];
+pub(crate) fn mod_is_cached(config_path: &str, mod_value: &str) -> Result<bool, String> {
     // Define mod cache path
     let mod_cache_path: &str = &format!("{}/mods/cached/", &config_path);
     // Ensure the mod cache exists before trying to search it
     if !Path::new(&mod_cache_path).exists() {
-        fs::create_dir_all(&mod_cache_path)
-            .expect("Failed to create path to mods cache. Ensure you have permissions to do this.");
+        match fs::create_dir_all(&mod_cache_path) {
+            Ok(_) => { },
+            Err(_) => return Err("Failed to create mod cache path!".to_string())
+        };
     }
     // Search the mod cache for a mod
-    let mod_path: &str = &format!("{}/{}/{}/mod.tar.gz", &mod_cache_path, &mod_author, &mod_name);
+    let mod_path: &str = &format!("{}/{}/mod.tar.gz", &mod_cache_path, &mod_value);
     // Return the value
-    return Path::new(&mod_path).exists()
+    if Path::new(&mod_path).exists() {
+        Ok(true)
+    } else {
+        Ok(false)
+    }
 }
 
-pub(crate) fn test_file_conflicts(config_path: &str, mod_value: &str, data_path: &str, verbose: bool) -> Result<(), &'static str> {
-    let mod_values = split_mod_value(mod_value);
-    let mod_author = &mod_values[0];
-    let mod_name = &mod_values[1];
+pub(crate) fn test_file_conflicts(config_path: &str, mod_value: &str, verbose: &bool) -> Result<bool, &'static str> {
     // Get mod index path
-    let index_path = format!("{}/mods/indices/{}/{}/index", &config_path, &mod_author, &mod_name);
-    // Ensure all provided paths are valid
-    if !Path::new(&index_path).exists() || !Path::new(&data_path).exists() {
-        return Err("Input path does not exist");
+    let index_path = format!("{}/mods/indices/{}/index", &config_path, &mod_value);
+    // Get Data path
+    let data_path = match config_file::load_config_file(&config_path) {
+        Ok(config) => match profile::load_profile_file(format!("{}/profiles/{}/profile", &config_path, &config.current_profile)) {
+            Ok(profile) => profile.install_path,
+            Err(_) => return Err("Failed to load profile file!")
+        },
+        Err(_) => return Err("Failed to load configuration file!")
+    };
+    // Create index path if it doesn't exist
+    if !Path::new(&index_path).exists() {
+        match generate_index(&config_path, &mod_value, &verbose) {
+            Ok(_) => { println!("Generated index for {}", &mod_value) },
+            Err(issue) => return Err(format!("Failed to generate mod index <- {}", issue))
+        };
+    }
+    // Ensure the data path exists
+    if !Path::new(&data_path).exists() {
+        return Err("Installation path does not exist!");
     }
     // Load mod index file
-    let mods: String = fs::read_to_string(&index_path)
+    let files: String = fs::read_to_string(&index_path)
         .unwrap().parse().unwrap();
     // Iterate over mod files and see if they would conflict with another file
-    for item in mods.lines() {
+    for item in files.lines() {
         // Only test files that are going into the Data/ path
         if item.substring(0, 5) == "Data/" && item != "Data/" {
             let outpath = format!("{}/{}", &data_path, &item);
             if Path::new(&outpath).exists() {
                 println!("File conflict: {}", &item);
-                return Err("File conflict detected");
+                return Ok(true);
             } else {
-                if verbose {
+                if *verbose {
                     println!("No conflict: {}", &item);
                 }
             }
         }
     }
-    Ok(())
+    Ok(false)
 }
 
-pub(crate) fn log_files(config_path: &str, current_profile: &str, mod_value: &str, action: &str, verbose: bool) -> Result<(), &'static str> {
-    let mod_values = split_mod_value(mod_value);
-    let mod_author = &mod_values[0];
-    let mod_name = &mod_values[1];
-    let index_path = format!("{}/mods/indices/{}/{}/index", &config_path, &mod_author, &mod_name);
+pub(crate) fn log_files(config_path: &str, mod_value: &str, action: &str, verbose: bool) -> Result<(), &'static str> {
+    // Get current profile
+    let current_profile = match config_file::current_profile(&config_path) {
+        Ok(profile) => profile,
+        Err(issue) => return Err(format!("Failed to get current profile <- {}", issue))
+    };
+    let index_path = format!("{}/mods/indices/{}/index", &config_path, &mod_value);
     let dict_path = format!("{}/profiles/{}/file_associations.json", &config_path, &current_profile);
     // Test that files exist and create them if they don't
     let mut dictionary = HashMap::new();
@@ -148,11 +215,13 @@ pub(crate) fn log_files(config_path: &str, current_profile: &str, mod_value: &st
     }
     // Test that mod index exists
     if !Path::new(&index_path).exists() {
-        // TODO: Generate mod index instead of failing
-        return Err("Mod index does not exist");
+        // Generate index if it doesn't exist
+        println!("Index for {} does not exist. Generating.", &mod_value);
+        generate_index(&config_path, &mod_value, &verbose);
     }
     // Load mod index
-    let mod_index: String = fs::read_to_string(&index_path).unwrap().parse().unwrap();
+    let mod_index: String = fs::read_to_string(&index_path)
+        .unwrap().parse().unwrap();
     // Preform the appropriate action
     match action {
         "install" => {
@@ -204,4 +273,12 @@ pub(crate) fn uninstall_mod(config_path: &str, current_profile: &str, data_path:
             fs::remove_file(&remove_path).expect(&format!("Failed to remove file {}", &remove_path));
         }
     }
+}
+
+pub(crate) fn mod_is_installed(config_path: &str, mod_value: &str) -> Result<bool, String> {
+    // Get current profile
+    return match config_file::load_config_file(&config_path) {
+        Ok(config) => Ok(config.repository_list.contains(&mod_value.to_string())),
+        Err(_) => Err("Failed to load configuration file".to_string())
+    };
 }

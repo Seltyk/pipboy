@@ -19,13 +19,20 @@ use reqwest;
 use std::fs;
 use std::path::Path;
 
+use super::config_file;
+
 /// Get the package index of a remote repository
 pub(crate) fn get_index(remote: &str) {
     let index_path = format!("Updated index for: https://{}/index.json", remote);
     println!("{}", &index_path);
 }
 
-pub(crate) fn fetch_mod(config_path: &str, remotes: &Vec<String>, mod_value: &str) {
+pub(crate) fn fetch_mod(config_path: &str, mod_value: &str) -> Result<(), String> {
+    // Get remotes from config file
+    let remotes = match config_file::load_config_file(&config_path) {
+        Ok(config) => config.repository_list,
+        Err(_) => return Err("Failed to load configuration file!".to_string())
+    };
     for server in remotes {
         let url = format!("https://{}/mods/{}/mod.tar.gz", &server, &mod_value);
         let res = reqwest::blocking::get(&url).unwrap();
@@ -34,11 +41,18 @@ pub(crate) fn fetch_mod(config_path: &str, remotes: &Vec<String>, mod_value: &st
             println!("{} was found at {}", &mod_value, &server);
             let path = format!("{}/mods/cached/{}/", &config_path, &mod_value);
             if !Path::new(&path).exists() {
-                fs::create_dir_all(&path).expect("Failed to create path for mod");
+                match fs::create_dir_all(&path) {
+                    Ok(_) => {}
+                    Err(_) => return Err(format!("Failed to create path {}", &path))
+                };
             }
-            fs::write(&format!("{}/mod.tar.gz", &path), res.bytes().unwrap()).expect("Failed to write mod to disk.");
+            return match fs::write(&format!("{}/mod.tar.gz", &path), res.bytes().unwrap()) {
+                Ok(_) => Ok(()),
+                Err(_) => Err("Failed to write mod file to disk".to_string())
+            };
         }
     }
+    Err("Mod was not found in any repositories".to_string())
 }
 
 pub(crate) fn fetch_mod_depends(_config_path: &str, remotes: &Vec<String>, mod_value: &str) -> Vec<String> {

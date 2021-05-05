@@ -47,6 +47,7 @@ fn main() {
     // Load CLI arguments with clap
     let yaml = load_yaml!("arguments.yaml");
     let matches = App::from_yaml(yaml).get_matches();
+    let verbose = matches.is_present("verbose");
     // Get config path
     let config_path = resolve_home_dir(
         matches.value_of("config")
@@ -147,6 +148,7 @@ fn main() {
         Some("install") => {
             let subcommand_matches = matches.subcommand_matches("install")
                 .unwrap();
+            let force = subcommand_matches.is_present("force");
             // Update repository index if requested
             if subcommand_matches.is_present("update") {
                 let repos = &config_file.repository_list;
@@ -168,42 +170,13 @@ fn main() {
                 }
                 // Get current mod from the top of the vector
                 let mod_value = mod_queue.pop().unwrap();
-                // Test if mod is already installed
-                if current_profile_file.enabled_mods.contains(&mod_value) {
-                    // Skip mod if it's already installed
-                    println!("{} is already installed.", &mod_value);
-                    continue;
+                // Install mod
+                match mods::install_mod(&config_path, &mod_value, &verbose, &force) {
+                    Ok(_) => { println!("Installed {}", &mod_value) },
+                    Err(issue) => { println!("Failed to install {} <- {}", &mod_value, &issue); exit(1); }
                 }
-                // Search the mod cache for the current mod
-                if !mods::search_mod_cache(&config_path, &mod_value) {
-                    // Mod does not exist locally and needs to be fetched
-                    println!("{} not found locally. Attempting to fetch from repositories.", &mod_value);
-                    remote::fetch_mod(&config_path, &config_file.repository_list, &mod_value);
-                } else {
-                    println!("Using local cached version of {}", &mod_value);
-                }
-                // Test if the mod has an index file
-                if !mods::mod_has_index(&config_path, &mod_value) {
-                    // Mod does not have a file index. Generate before install.
-                    mods::generate_index(&config_path, &mod_value, matches.is_present("verbose"))
-                        .expect("This error shouldn't be possible");
-                } else {
-                    if matches.is_present("verbose") {
-                        println!("Mod {} already has an index file", &mod_value);
-                    }
-                }
-                // Check for file conflicts
-                if !subcommand_matches.is_present("force") {
-                    mods::test_file_conflicts(&config_path, &mod_value, &current_profile_file.install_path, matches.is_present("verbose")).expect("Error checking for file conflicts");
-                } else {
-                    if matches.is_present("verbose") {
-                        println!("Skipping file conflict testing");
-                    }
-                }
-                // Install the mod
-                println!("Installed {}", &mod_value);
-                mods::install_mod(&config_path, &current_profile_file.install_path, &mod_value);
-                mods::log_files(&config_path, &config_file.current_profile, &mod_value, "install", matches.is_present("verbose")).expect("Failed to update file association dictionary.");
+                // Update file ownership hashmap
+                mods::log_files(&config_path, &mod_value, "install", matches.is_present("verbose")).expect("Failed to update file association dictionary.");
                 // Push dependencies to stack
                 let depends = remote::fetch_mod_depends(&config_path, &config_file.repository_list, &mod_value);
                 for item in depends {
@@ -215,7 +188,7 @@ fn main() {
             // Update profile
             exit(match profile::save_profile_file(&config_path, current_profile_file) {
                 Ok(_) => 0,
-                Err(issue) => { println!("Failed to install mods <- {}", issue); 1 }
+                Err(issue) => { println!("Failed to save installed mods to profile <- {}", issue); 1 }
             });
         }
         Some("uninstall") => {
@@ -232,7 +205,7 @@ fn main() {
                 }
                 // Uninstall the mod
                 mods::uninstall_mod(&config_path, &config_file.current_profile, &current_profile_file.install_path, &mod_value, matches.is_present("verbose"));
-                mods::log_files(&config_path, &config_file.current_profile, &mod_value, "uninstall", matches.is_present("verbose")).expect("Failed to update file ownership dictionary.");
+                mods::log_files(&config_path, &mod_value, "uninstall", matches.is_present("verbose")).expect("Failed to update file ownership dictionary.");
             }
         }
         _ => {
