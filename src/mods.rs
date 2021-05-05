@@ -19,7 +19,6 @@ use std::path::Path;
 use std::fs;
 use std::fs::File;
 use std::io::Write;
-use std::str::Lines;
 use substring::Substring;
 
 use super::archives;
@@ -204,8 +203,18 @@ pub(crate) fn mod_is_installed(config_path: &str, mod_value: &str) -> Result<boo
 }
 
 pub(crate) fn load_index(config_path: &str, mod_value: &str) -> Result<String, String> {
+    // Define mod index path
+    let index_path = format!("{}/mods/indices/{}/index", &config_path, &mod_value);
+    // Create index if it doesn't exist
+    if !Path::new(&index_path).exists() {
+        match generate_index(&config_path, &mod_value, &false) {
+            Ok(_) => { println!("Generated index for {}", &mod_value) },
+            Err(issue) => return Err(format!("Failed to generate index for {} <- {}", &mod_value, issue))
+        };
+    }
+    // Return the mod index to the calling function
     return match std::fs::read_to_string(
-        &format!("{}/mods/indices/{}/index", &config_path, &mod_value)) {
+        &index_path) {
             Ok(string) => { let value: String = string.parse().unwrap(); 
                 return Ok(value); 
             },
@@ -214,5 +223,29 @@ pub(crate) fn load_index(config_path: &str, mod_value: &str) -> Result<String, S
 }
 
 pub(crate) fn uninstall_mod(config_path: &str, mod_value: &str) -> Result<(), String> {
+    // Get index of files to remove
+    let mod_index = match load_index(&config_path, &mod_value) {
+        Ok(index) => index,
+        Err(issue) => return Err(format!("Failed to load index file for {} <- {}", &mod_value, issue))
+    };
+    let current_profile = match config_file::current_profile(&config_path) {
+        Ok(profile) => profile,
+        Err(issue) => return Err(format!("Failed to get current profile <- {}", issue))
+    };
+    let install_path = match profile::load_profile_file(
+        &format!("{}/profiles/{}/profile", &config_path, &current_profile)) {
+            Ok(profile) => profile.install_path,
+            Err(issue) => return Err(format!("Failed to load profile <- {}", issue))
+        };
+    // Iterate through and remove files
+    for file in mod_index.lines() {
+        let full_path = format!("{}/{}", &install_path, &file);
+        if Path::new(&full_path).exists() {
+            match fs::remove_file(&full_path) {
+                Ok(_) => {},
+                Err(_) => return Err(format!("Failed to remove file {}", &full_path))
+            };
+        }
+    }
     Ok(())
 }

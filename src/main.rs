@@ -196,7 +196,17 @@ fn main() {
             });
         }
         Some("uninstall") => {
-            // Reimplement this later
+            let subcommand_matches = matches.subcommand_matches("uninstall")
+                .unwrap();
+            for mod_value in subcommand_matches.values_of("name").unwrap() {
+                match mods::uninstall_mod(&config_path, &mod_value) {
+                    Ok(_) => { println!("Uninstalled {}", &mod_value) },
+                    Err(issue) => {
+                        println!("Failed to uninstall {} <- {}", &mod_value, issue);
+                        exit(1)
+                    }
+                }
+            }
         }
         _ => {
             println!("Command missing! Try with -h for more info.");
