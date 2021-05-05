@@ -58,7 +58,7 @@ fn main() {
             .expect("Failed to create path to configuration directory.");
     }
     // Load configuration file
-    let mut config_file = match config_file::load_config_file(&config_path) {
+    let config_file = match config_file::load_config_file(&config_path) {
         Ok(config_file) => config_file,
         Err(e) => panic!("Failed to load configuration file <- {}", e),
     };
