@@ -62,8 +62,6 @@ pub(crate) fn installation_update(config_path: &str, mod_value: &str, verbose: &
         Ok(map) => map,
         Err(issue) => return Err(format!("Failed to load file ownership table <- {}", issue))
     };
-    // Define path to mod index
-    let index_path = format!("{}/mods/indices/{}/index", &config_path, &mod_value);
     // Generate mod index if it doesn't exist
     if !mods::mod_has_index(&config_path, &mod_value) {
         match mods::generate_index(&config_path, &mod_value, &verbose) {
