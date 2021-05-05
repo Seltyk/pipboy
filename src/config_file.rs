@@ -30,7 +30,7 @@ pub(crate) struct ConfigFile {
 impl std::default::Default for ConfigFile {
     fn default() -> Self { Self {
         current_profile: "Fallout New Vegas".into(),
-        repository_list: Vec::new(),
+        repository_list: vec!["pipboy.aayla.dev".to_string()],
     }}
 }
 /// Returns a ConfigFile from a given path
