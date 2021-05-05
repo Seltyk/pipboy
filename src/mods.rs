@@ -149,16 +149,16 @@ pub(crate) fn mod_is_cached(config_path: &str, mod_value: &str) -> Result<bool, 
     }
 }
 
-pub(crate) fn test_file_conflicts(config_path: &str, mod_value: &str, verbose: &bool) -> Result<bool, &'static str> {
+pub(crate) fn test_file_conflicts(config_path: &str, mod_value: &str, verbose: &bool) -> Result<bool, String> {
     // Get mod index path
     let index_path = format!("{}/mods/indices/{}/index", &config_path, &mod_value);
     // Get Data path
     let data_path = match config_file::load_config_file(&config_path) {
-        Ok(config) => match profile::load_profile_file(format!("{}/profiles/{}/profile", &config_path, &config.current_profile)) {
+        Ok(config) => match profile::load_profile_file(&format!("{}/profiles/{}/profile", &config_path, &config.current_profile)) {
             Ok(profile) => profile.install_path,
-            Err(_) => return Err("Failed to load profile file!")
+            Err(_) => return Err("Failed to load profile file!".to_string())
         },
-        Err(_) => return Err("Failed to load configuration file!")
+        Err(_) => return Err("Failed to load configuration file!".to_string())
     };
     // Create index path if it doesn't exist
     if !Path::new(&index_path).exists() {
@@ -169,7 +169,7 @@ pub(crate) fn test_file_conflicts(config_path: &str, mod_value: &str, verbose: &
     }
     // Ensure the data path exists
     if !Path::new(&data_path).exists() {
-        return Err("Installation path does not exist!");
+        return Err("Installation path does not exist!".to_string());
     }
     // Load mod index file
     let files: String = fs::read_to_string(&index_path)
@@ -192,7 +192,7 @@ pub(crate) fn test_file_conflicts(config_path: &str, mod_value: &str, verbose: &
     Ok(false)
 }
 
-pub(crate) fn log_files(config_path: &str, mod_value: &str, action: &str, verbose: bool) -> Result<(), &'static str> {
+pub(crate) fn log_files(config_path: &str, mod_value: &str, action: &str, verbose: bool) -> Result<(), String> {
     // Get current profile
     let current_profile = match config_file::current_profile(&config_path) {
         Ok(profile) => profile,
@@ -250,7 +250,7 @@ pub(crate) fn log_files(config_path: &str, mod_value: &str, action: &str, verbos
         }
         _ => {
             println!("log_files() was called with an invalid action!");
-            return Err("Invalid action");
+            return Err("Invalid action".to_string());
         }
     }
     // Serialize the dictionary

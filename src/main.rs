@@ -192,21 +192,7 @@ fn main() {
             });
         }
         Some("uninstall") => {
-            let subcommand_matches = matches.subcommand_matches("uninstall")
-                .unwrap();
-                for mod_value in subcommand_matches.values_of("name").unwrap() {
-                // Test that the mod has an index file
-                if !mods::mod_has_index(&config_path, &mod_value) {
-                    // Test that a mod exists locally before trying to generate an index
-                    if !mods::search_mod_cache(&config_path, &mod_value) {
-                        remote::fetch_mod(&config_path, &config_file.repository_list, &mod_value);
-                    }
-                    mods::generate_index(&config_path, &mod_value, matches.is_present("verbose")).expect("Failed to generate index file.");
-                }
-                // Uninstall the mod
-                mods::uninstall_mod(&config_path, &config_file.current_profile, &current_profile_file.install_path, &mod_value, matches.is_present("verbose"));
-                mods::log_files(&config_path, &mod_value, "uninstall", matches.is_present("verbose")).expect("Failed to update file ownership dictionary.");
-            }
+            // Reimplement this later
         }
         _ => {
             println!("Command missing! Try with -h for more info.");
