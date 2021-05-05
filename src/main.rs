@@ -52,7 +52,6 @@ fn main() {
         matches.value_of("config")
             .expect("Failed to read config path argument")
     );
-    let config_file_path = format!("{}/config", config_path);
     // Create path for config if it doesn't exist
     if !Path::new(&config_path).exists() {
         fs::create_dir_all(&config_path)
