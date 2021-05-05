@@ -24,13 +24,13 @@ use super::profile;
 #[derive(Serialize, Deserialize)]
 pub(crate) struct ConfigFile {
     pub(crate) current_profile: String,
-    pub(crate) repository_list: String,
+    pub(crate) repository_list: Vec<String>,
 }
 /// `ConfigFile` implements `Default`
 impl std::default::Default for ConfigFile {
     fn default() -> Self { Self {
         current_profile: "Fallout New Vegas".into(),
-        repository_list: "pipboy.aayla.dev".into(),
+        repository_list: Vec::new(),
     }}
 }
 /// Returns a ConfigFile from a given path

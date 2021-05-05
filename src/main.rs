@@ -149,7 +149,7 @@ fn main() {
                 .unwrap();
             // Update repository index if requested
             if subcommand_matches.is_present("update") {
-                let repos = remote::get_repositories(&config_file.repository_list);
+                let repos = &config_file.repository_list;
                 for repo in repos {
                     remote::get_index(&repo);
                 }

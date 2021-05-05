@@ -25,17 +25,7 @@ pub(crate) fn get_index(remote: &str) {
     println!("{}", &index_path);
 }
 
-pub(crate) fn get_repositories(csv: &str) -> Vec<String> {
-    // I should use a collection here but I'm not sure how
-    let mut vec = Vec::new();
-    for repo in csv.split(",") {
-        vec.push(repo.to_string());
-    }
-    return vec;
-}
-
-pub(crate) fn fetch_mod(config_path: &str, remotes: &str, mod_value: &str) {
-    let remotes = get_repositories(&remotes);
+pub(crate) fn fetch_mod(config_path: &str, remotes: &Vec<String>, mod_value: &str) {
     for server in remotes {
         let url = format!("https://{}/mods/{}/mod.tar.gz", &server, &mod_value);
         let res = reqwest::blocking::get(&url).unwrap();
@@ -51,10 +41,9 @@ pub(crate) fn fetch_mod(config_path: &str, remotes: &str, mod_value: &str) {
     }
 }
 
-pub(crate) fn fetch_mod_depends(_config_path: &str, remotes: &str, mod_value: &str) -> Vec<String> {
+pub(crate) fn fetch_mod_depends(_config_path: &str, remotes: &Vec<String>, mod_value: &str) -> Vec<String> {
     // TODO: Use game name from profile from remote
     let mut return_vector = Vec::new();
-    let remotes = get_repositories(&remotes);
     for server in remotes {
         let url = format!("https://{}/mods/{}/depends.txt", &server, &mod_value);
         let res = reqwest::blocking::get(&url).unwrap();
