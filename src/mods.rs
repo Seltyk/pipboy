@@ -61,7 +61,10 @@ pub(crate) fn install_mod(config_path: &str, mod_value: &str, verbose: &bool, fo
     };
     // Create an index file if the mod does not have one
     if !mod_has_index(&config_path, &mod_value) {
-        generate_index(&config_path, &mod_value, &verbose);
+        match generate_index(&config_path, &mod_value, &verbose) {
+            Ok(_) => println!("Generated index for {}", &mod_value),
+            Err(issue) => return Err(format!("Failed to generate mod index for {} <- {}", &mod_value, issue))
+        }
     }
     // Check for file conflits
     match *force {
