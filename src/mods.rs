@@ -40,9 +40,9 @@ pub(crate) fn install_mod(config_path: &str, mod_value: &str, verbose: &bool, fo
     // Test if mod is already installed
     match mod_is_installed(&config_path, &mod_value) {
         Ok(result) => match result {
-            true => return Err("Mod is already installed!".to_string()),
-            false => {}
-        }
+            true => return Err(format!("{} is already installed!", &mod_value)),
+            false => { }
+        },
         Err(issue) => return Err(format!("Failed to test if mod is already installed <- {}", issue))
     };
     // Check if the mod is cached locally
@@ -85,7 +85,7 @@ pub(crate) fn install_mod(config_path: &str, mod_value: &str, verbose: &bool, fo
     };
 }
 
-pub(crate) fn generate_index(config_path: &str, mod_value: &str, verbose: &bool) -> Result<(), &'static str> {
+pub(crate) fn generate_index(config_path: &str, mod_value: &str, verbose: &bool) -> Result<(), String> {
     let mod_values = split_mod_value(mod_value);
     let mod_author = &mod_values[0];
     let mod_name = &mod_values[1];
@@ -97,21 +97,27 @@ pub(crate) fn generate_index(config_path: &str, mod_value: &str, verbose: &bool)
     if !Path::new(&index_path).parent().unwrap().exists() {
         fs::create_dir_all(Path::new(&index_path).parent().unwrap()).expect("Unable to create indices folder. Ensure you have permission to do this.");
     }
-    if Path::new(&mod_path).exists() {
-        let mod_contents = archives::list_contents(&mod_path);
-        let mut f = File::create(&index_path).expect("Cannot create index file! Ensure you have permission to do this.");
-        for item in mod_contents {
-            if &item.chars().last().unwrap() != &'/' {
-                f.write(format!("{}\n", item).as_bytes()).expect("Failed to write index file!");
-                if *verbose {
-                    println!("{}", &item);
-                }
+    // Get mod from remote if it isn't saved locally
+    if !Path::new(&mod_path).exists() {
+        match remote::fetch_mod(&config_path, &mod_value) {
+            Ok(_) => { }
+            Err(issue) => return Err(format!("Failed to fetch {} from remote <- {}", &mod_value, issue))
+        };
+    }
+    let mod_contents = archives::list_contents(&mod_path);
+    let mut f = match File::create(&index_path) {
+        Ok(file) => file,
+        Err(_) => return Err("Failed to create index path!".to_string())
+    };
+    for item in mod_contents {
+        if &item.chars().last().unwrap() != &'/' {
+            f.write(format!("{}\n", item).as_bytes()).expect("Failed to write index file!");
+            if *verbose {
+                println!("{}", &item);
             }
         }
-        Ok(())
-    } else {
-        Err("Can't index a mod that doesn't exist!")
     }
+    Ok(())
 }
 
 pub(crate) fn mod_has_index(config_path: &str, mod_value: &str) -> bool {
@@ -196,9 +202,14 @@ pub(crate) fn test_file_conflicts(config_path: &str, mod_value: &str, verbose: &
 
 pub(crate) fn mod_is_installed(config_path: &str, mod_value: &str) -> Result<bool, String> {
     // Get current profile
-    return match config_file::load_config_file(&config_path) {
-        Ok(config) => Ok(config.repository_list.contains(&mod_value.to_string())),
-        Err(_) => Err("Failed to load configuration file!".to_string())
+    let current_profile = match config_file::load_config_file(&config_path) {
+        Ok(config) => config.current_profile,
+        Err(_) => return Err("Failed to load configuration file!".to_string())
+    };
+    let profile_path = format!("{}/profiles/{}/profile", &config_path, &current_profile);
+    return match profile::load_profile_file(&profile_path) {
+        Ok(profile) => Ok(profile.enabled_mods.contains(&mod_value.to_string())),
+        Err(issue) => Err(format!("Failled to load profile file <- {}", issue))
     };
 }
 
@@ -223,6 +234,14 @@ pub(crate) fn load_index(config_path: &str, mod_value: &str) -> Result<String, S
 }
 
 pub(crate) fn uninstall_mod(config_path: &str, mod_value: &str) -> Result<(), String> {
+    // Make sure the mod is installed first
+    match mod_is_installed(&config_path, &mod_value) {
+        Ok(installed) => match installed {
+            true => println!("Uninstalling {}", &mod_value),
+            false => return Err(format!("{} isn't installed!", &mod_value))
+        },
+        Err(issue) => return Err(format!("Failed to test if {} is installed <- {}", &mod_value, issue))
+    };
     // Get index of files to remove
     let mod_index = match load_index(&config_path, &mod_value) {
         Ok(index) => index,
