@@ -204,7 +204,6 @@ pub(crate) fn mod_is_installed(config_path: &str, mod_value: &str) -> Result<boo
 }
 
 pub(crate) fn load_index(config_path: &str, mod_value: &str) -> Result<String, String> {
-    // Get current profile
     return match std::fs::read_to_string(
         &format!("{}/mods/indices/{}/index", &config_path, &mod_value)) {
             Ok(string) => { let value: String = string.parse().unwrap(); 
