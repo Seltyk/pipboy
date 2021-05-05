@@ -19,8 +19,8 @@ use std::path::Path;
 use std::fs;
 use std::fs::File;
 use std::io::Write;
+use std::str::Lines;
 use substring::Substring;
-use std::collections::HashMap;
 
 use super::archives;
 use super::profile;
@@ -199,6 +199,21 @@ pub(crate) fn mod_is_installed(config_path: &str, mod_value: &str) -> Result<boo
     // Get current profile
     return match config_file::load_config_file(&config_path) {
         Ok(config) => Ok(config.repository_list.contains(&mod_value.to_string())),
-        Err(_) => Err("Failed to load configuration file".to_string())
+        Err(_) => Err("Failed to load configuration file!".to_string())
     };
+}
+
+pub(crate) fn load_index(config_path: &str, mod_value: &str) -> Result<String, String> {
+    // Get current profile
+    return match std::fs::read_to_string(
+        &format!("{}/mods/indices/{}/index", &config_path, &mod_value)) {
+            Ok(string) => { let value: String = string.parse().unwrap(); 
+                return Ok(value); 
+            },
+            Err(_) => Err(format!("Failed to read index file for {}", &mod_value))
+        };
+}
+
+pub(crate) fn uninstall_mod(config_path: &str, mod_value: &str) -> Result<(), String> {
+    Ok(())
 }

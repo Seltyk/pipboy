@@ -64,28 +64,28 @@ pub(crate) fn installation_update(config_path: &str, mod_value: &str, verbose: &
     };
     // Define path to mod index
     let index_path = format!("{}/mods/indices/{}/index", &config_path, &mod_value);
-    // Test that mod index exists
-    if !Path::new(&index_path).exists() {
-        // Generate index if it doesn't exist
-        println!("Index for {} does not exist. Generating.", &mod_value);
+    // Generate mod index if it doesn't exist
+    if !mods::mod_has_index(&config_path, &mod_value) {
         match mods::generate_index(&config_path, &mod_value, &verbose) {
             Ok(_) => println!("Generated index for {}", &mod_value),
             Err(issue) => return Err(format!("Failed to generate mod index for {} <- {}", &mod_value, issue))
         }
     }
     // Load mod index
-    let mod_index: String = fs::read_to_string(&index_path)
-        .unwrap().parse().unwrap();
-    // Populate HashMap with updates
+    let mod_index = match mods::load_index(&config_path, &mod_value) {
+        Ok(index) => index,
+        Err(issue) => return Err(format!("Failed to get mod index <- {}", issue))
+    };
+    // If we've gotten this far, the user has either ignored checking or the ownership
+    // table is out of sync, so it's safe to just nuke and overwrite duplicate entries.
     for file in mod_index.lines() {
-        let file_string = file.to_string();
         // Remove the value if the file was already in use by another mod
-        if ownership_map.contains_key(&file_string) {
-            ownership_map.remove(&file_string);
+        if ownership_map.contains_key(&*file) {
+            ownership_map.remove(&*file);
         }
         // Define the file's owner
         ownership_map.insert(
-            file_string,
+            file.to_string(),
             mod_value.to_string(),
         );
     }
