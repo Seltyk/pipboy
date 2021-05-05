@@ -179,7 +179,7 @@ fn main() {
                 // Update file ownership hashmap
                 match file_ownership::installation_update(&config_path, &mod_value, &verbose) {
                     Ok(_) => { },
-                    Err(issue) => { println!("Failed to update file ownership table <- {}", issue); }
+                    Err(issue) => { println!("Failed to update file ownership table <- {}", issue); exit(1) }
                 }
                 // Push dependencies to stack
                 let depends = remote::fetch_mod_depends(&config_path, &config_file.repository_list, &mod_value);
