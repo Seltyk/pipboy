@@ -220,7 +220,10 @@ pub(crate) fn log_files(config_path: &str, mod_value: &str, action: &str, verbos
     if !Path::new(&index_path).exists() {
         // Generate index if it doesn't exist
         println!("Index for {} does not exist. Generating.", &mod_value);
-        generate_index(&config_path, &mod_value, &verbose);
+        match generate_index(&config_path, &mod_value, &verbose) {
+            Ok(_) => println!("Generated index for {}", &mod_value),
+            Err(issue) => return Err(format!("Failed to generate mod index for {} <- {}", &mod_value, issue))
+        }
     }
     // Load mod index
     let mod_index: String = fs::read_to_string(&index_path)
