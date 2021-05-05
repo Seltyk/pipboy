@@ -65,13 +65,8 @@ fn main() {
     // Get path to current profile
     let profiles_path = format!("{}/profiles/", config_path);
     let current_profile_file_path = format!("{}/{}/profile", &profiles_path, &config_file.current_profile);
-    let current_profile_file = profile::load_profile_file(&current_profile_file_path)
+    let mut current_profile_file = profile::load_profile_file(&current_profile_file_path)
         .expect("Failed to load current profile!");
-    // Get list of currently installed mods
-    let mut installed_mods = Vec::new();
-    for item in current_profile_file.install_path.split(",") {
-        installed_mods.push(item.to_string().clone());
-    }
     // Execute the given subcommand
     match matches.subcommand_name() {
         Some("profile") => {
@@ -159,12 +154,13 @@ fn main() {
                     remote::get_index(&repo);
                 }
             }
+            // Create a queue of mods to install
             let mut mod_queue = Vec::new();
             // Collect requested mods into vector
             for mod_value in subcommand_matches.values_of("name").unwrap() {
                 mod_queue.push(mod_value.to_string().clone());
             }
-            // Install mods
+            // Recursively install mods
             loop {
                 // Break out of the loop if finished
                 if mod_queue.len() == 0 {
@@ -172,12 +168,8 @@ fn main() {
                 }
                 // Get current mod from the top of the vector
                 let mod_value = mod_queue.pop().unwrap();
-                // Split modvalue into author and name
-                let mod_values = mods::split_mod_value(&mod_value);
-                let mod_author = &mod_values[0];
-                let mod_name = &mod_values[1];
                 // Test if mod is already installed
-                if installed_mods.contains(&mod_value) {
+                if current_profile_file.enabled_mods.contains(&mod_value) {
                     // Skip mod if it's already installed
                     println!("{} is already installed.", &mod_value);
                     continue;
@@ -197,7 +189,7 @@ fn main() {
                         .expect("This error shouldn't be possible");
                 } else {
                     if matches.is_present("verbose") {
-                        println!("Mod {}/{} already has an index file", &mod_author, &mod_name);
+                        println!("Mod {} already has an index file", &mod_value);
                     }
                 }
                 // Check for file conflicts
@@ -218,11 +210,13 @@ fn main() {
                     println!("{} depends on {}", &mod_value, &item);
                     mod_queue.push(item);
                 }
-                installed_mods.push(mod_value);
+                current_profile_file.enabled_mods.push(mod_value.clone());
             }
             // Update profile
-            confy::store_path(current_profile_file_path, current_profile_file)
-                .expect("Error saving configuration file!");
+            exit(match profile::save_profile_file(&config_path, current_profile_file) {
+                Ok(_) => 0,
+                Err(issue) => { println!("Failed to install mods <- {}", issue); 1 }
+            });
         }
         Some("uninstall") => {
             let subcommand_matches = matches.subcommand_matches("uninstall")

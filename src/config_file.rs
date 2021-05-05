@@ -42,7 +42,7 @@ impl std::default::Default for ConfigFile {
 /// ```
 pub(crate) fn load_config_file(config_path: &str) -> Result<ConfigFile, Box<dyn Error>> {
     // Parse JSON from file
-    let config:ConfigFile = confy::load_path(&format!("{}/profile", config_path))?;
+    let config:ConfigFile = confy::load_path(&format!("{}/config", config_path))?;
     // Return config
     Ok(config)
 }
@@ -72,7 +72,7 @@ pub(crate) fn select_profile(config_path: &str, new_profile: &str) -> Result<(),
 }
 
 pub(crate) fn current_profile(config_path: &str) -> Result<String, &'static str> {
-    return match load_config_file(&format!("{}/config", &config_path)) {
+    return match load_config_file(&config_path) {
         Ok(config) => Ok(config.current_profile),
         Err(_problem) => return Err("Failed to load configuration file!")
     };

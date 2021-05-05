@@ -26,14 +26,14 @@ use super::config_file;
 #[derive(Serialize, Deserialize)]
 pub(crate) struct ProfileFile {
     pub(crate) install_path: String,
-    pub(crate) enabled_mods: String,
+    pub(crate) enabled_mods: Vec<String>,
     pub(crate) game: String,
 }
 /// `ProfileFile` implements `Default`
 impl std::default::Default for ProfileFile {
     fn default() -> Self { Self {
         install_path: "path/to/fallout/install/".into(),
-        enabled_mods: "".into(),
+        enabled_mods: Vec::new(),
         game: "Fallout: New Vegas".into(),
     }}
 }
@@ -44,6 +44,18 @@ pub(crate) fn load_profile_file(profile_path: &str) -> Result<ProfileFile, Box<d
     // Return config
     Ok(profile)
 }
+
+pub(crate) fn save_profile_file(config_path: &str, new_profile: ProfileFile) -> Result<(), String> {
+    let profile_name = match config_file::current_profile(&config_path) {
+        Ok(name) => name,
+        Err(issue) => return Err(format!("Failed to get current profile <- {}", issue)) 
+    };
+    return match confy::store_path(&format!("{}/profiles/{}/profile", &config_path, &profile_name), &new_profile) {
+        Ok(_result) => Ok(()),
+        Err(_) => Err("Failed to save profile file".to_string())
+    };
+}
+
 
 pub(crate) fn list_profiles(config_path: &str) -> Result<(), String> {
     let current_profile = match config_file::current_profile(&config_path) {

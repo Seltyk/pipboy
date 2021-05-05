@@ -103,6 +103,8 @@ pub(crate) fn test_file_conflicts(config_path: &str, mod_value: &str, data_path:
     // Get mod index path
     let index_path = format!("{}/mods/indices/{}/{}/index", &config_path, &mod_author, &mod_name);
     // Ensure all provided paths are valid
+    println!("Index Path: {}", &index_path);
+    println!("Data Path: {}", &data_path);
     if !Path::new(&index_path).exists() || !Path::new(&data_path).exists() {
         return Err("Input path does not exist");
     }
