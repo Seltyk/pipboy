@@ -59,9 +59,9 @@ fn main() {
             .expect("Failed to create path to configuration directory.");
     }
     // Load configuration file
-    let mut config_file = match config_file::load_config_file(&config_file_path) {
+    let mut config_file = match config_file::load_config_file(&config_path) {
         Ok(config_file) => config_file,
-        Err(e) => panic!("Failed to load configuration file: {}", e),
+        Err(e) => panic!("Failed to load configuration file <- {}", e),
     };
     // Get path to current profile
     let profiles_path = format!("{}/profiles/", config_path);
@@ -81,8 +81,11 @@ fn main() {
                 .unwrap();
             // Select a given profile
             match subcommand_matches.subcommand_name() {
-                Some("list") | Some("ls") => {
-                    profile::list_profiles(&config_path);
+                Some("ls") => {
+                    exit(match profile::list_profiles(&config_path) {
+                        Ok(_result) => 0,
+                        Err(problem) => { println!("Failed to list profiles <- {}", problem); 1 }
+                    });
                 }
                 Some("create") => {
                     let subsubcommand_matches = subcommand_matches.subcommand_matches("create")
@@ -91,7 +94,7 @@ fn main() {
                         .expect("Error reading name of new profile.");
                     exit(match profile::create_profile(&config_path, &new_profile_name) {
                         Ok(_result) => 0,
-                        Err(problem) => {println!("Failed to create new profile: {}", problem); 1 }
+                        Err(problem) => { println!("Failed to create new profile <- {}", problem); 1 }
                     });
                 }
                 Some("select") => {
@@ -101,26 +104,19 @@ fn main() {
                         .expect("Error reading name of selected profile.");
                     exit(match config_file::select_profile(&config_path, &new_profile_name) {
                         Ok(_result) => 0,
-                        Err(error) => {println!("Failed to change profile: {}", error); 1}
+                        Err(error) => {println!("Failed to change profile <- {}", error); 1}
                     }
                 );
                 }
-                Some("remove") | Some("rm") => {
-                    let subsubcommand_matches = subcommand_matches.subcommand_matches("select")
+                Some("rm") => {
+                    let subsubcommand_matches = subcommand_matches.subcommand_matches("rm")
                         .unwrap();
                     let target_profile_name = subsubcommand_matches.value_of("name")
                         .expect("Error reading name of selected profile.");
-                    // Ensure the user is not trying to remove their current profile
-                    if target_profile_name == config_file.current_profile {
-                        // The profile is currently in use
-                        println!("Cannot remove current profile!");
-                        exit(1);
-                    } else {
-                        // The profile is not currently in use
-                        fs::remove_file(format!("{}/{}", profiles_path, target_profile_name))
-                            .expect(&format!("Error removing profile {}", target_profile_name));
-                    }
-
+                    exit(match profile::remove_profile(&config_path, &target_profile_name) {
+                        Ok(_result) => 0,
+                        Err(issue) => { println!("Failed to remove profile <- {}", issue); 1 }
+                    });
                 }
                 _ => {
                     println!("Command missing! Try with -h for more info.");

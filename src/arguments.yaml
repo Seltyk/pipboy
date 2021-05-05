@@ -28,10 +28,8 @@ subcommands:
                       help: Restore the data directory to a saved cache
     - profile:
         subcommands:
-          - list:
-              about: List all profiles
           - ls:
-              about: Alias of list
+              about: List all profiles
           - select:
               about: Select a profile
               args:
@@ -44,14 +42,8 @@ subcommands:
                 - name:
                     required: true
                     help: Name of the new profile
-          - remove:
-              about: Remove a profile
-              args:
-                - name:
-                    required: true
-                    help: The profile to remove
           - rm:
-              about: Alias of remove
+              about: Remove a profile
               args:
                 - name:
                     required: true

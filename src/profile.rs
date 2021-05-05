@@ -45,9 +45,11 @@ pub(crate) fn load_profile_file(profile_path: &str) -> Result<ProfileFile, Box<d
     Ok(profile)
 }
 
-pub(crate) fn list_profiles(config_path: &str) {
-    let config_file = config_file::load_config_file(&format!("{}/config", &config_path))
-        .unwrap();
+pub(crate) fn list_profiles(config_path: &str) -> Result<(), String> {
+    let current_profile = match config_file::current_profile(&config_path) {
+        Ok(profile) => profile,
+        Err(issue) => return Err(format!("Failed to get current profile <- {}", issue))
+    };
     let paths = fs::read_dir(format!("{}/profiles/", &config_path))
         .unwrap();
     println!("Available profiles:");
@@ -55,12 +57,13 @@ pub(crate) fn list_profiles(config_path: &str) {
         let file_name = path.unwrap().file_name();
         print!("Profile: {:?}", file_name);
         // Display an indicator next to the current profile
-        if file_name.to_str().unwrap() == &config_file.current_profile {
+        if file_name.to_str().unwrap() == &current_profile {
             print!(" [*]\n");
         } else {
             print!("\n");
         }
     }
+    Ok(())
 }
 
 pub(crate) fn profile_exists(config_path: &str, profile_name: &str) -> bool {
@@ -88,4 +91,25 @@ pub(crate) fn create_profile(config_path: &str, profile_name: &str) -> Result<()
         println!("Profile {} already exists!", &profile_name);
     }
     Ok(())
+}
+
+pub(crate) fn remove_profile(config_path: &str, profile_name: &str) -> Result<(), String> {
+    // Get current profile name
+    let current_profile = match config_file::current_profile(&config_path) {
+        Ok(profile) => profile,
+        Err(issue) => return Err(format!("Failed to get current profile <- {}", issue))
+    };
+    // Test that the user is not trying to remove the current profile
+    if profile_name == &current_profile {
+        return Err("Cannot remove current profile!".to_string());
+    }
+    // Ensure profile already exists before removing it
+    if !profile_exists(&config_path, &profile_name) {
+        return Err("Profile does not exist!".to_string());
+    }
+    // Remove the directory
+    return match fs::remove_dir(&format!("{}/profiles/{}", &config_path, &profile_name)) {
+        Ok(_result) => Ok(()),
+        Err(_problem) => Err("Failed to delete profile directory!".to_string())
+    };
 }
