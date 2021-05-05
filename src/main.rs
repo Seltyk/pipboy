@@ -21,6 +21,7 @@ mod archives;
 mod cache;
 mod remote;
 mod mods;
+mod file_ownership;
 
 #[macro_use]
 extern crate clap;
@@ -176,7 +177,10 @@ fn main() {
                     Err(issue) => { println!("Failed to install {} <- {}", &mod_value, &issue); exit(1); }
                 }
                 // Update file ownership hashmap
-                mods::log_files(&config_path, &mod_value, "install", matches.is_present("verbose")).expect("Failed to update file association dictionary.");
+                match file_ownership::installation_update(&config_path, &mod_value, &verbose) {
+                    Ok(_) => { },
+                    Err(issue) => { println!("Failed to update file ownership table <- {}", issue); }
+                }
                 // Push dependencies to stack
                 let depends = remote::fetch_mod_depends(&config_path, &config_file.repository_list, &mod_value);
                 for item in depends {
