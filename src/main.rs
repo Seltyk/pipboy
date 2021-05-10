@@ -138,7 +138,7 @@ fn main() {
                     // Get cache name from command line
                     let subsubcommand_matches  = subcommand_matches.subcommand_matches("restore").unwrap();
                     let cache_name = subsubcommand_matches.value_of("name").expect("Error reading name of cache.");
-                    cache::restore_cache(&format!("{}/Data", &current_profile_file.install_path), &cache_directory, &cache_name);
+                    cache::restore_cache(&current_profile_file.install_path, &cache_directory, &cache_name);
                 }
                 _ => {
                     println!("Command missing! Try with -h for more info.");

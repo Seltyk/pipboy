@@ -16,18 +16,84 @@
 // along with pipboy.  If not, see <http://www.gnu.org/licenses/>.
 
 use std::fs::File;
-use std::error::Error;
-use tar::Archive;
+use std::fs::OpenOptions;
+use std::io::{Read, Write};
+use std::path::Path;
 
-pub(crate) fn create_tarball(_tarball_path: &str, _input_files: &str) -> Result<(), std::io::Error> {
-    // TODO: Reimplement this function
+use flate2::Compression;
+use flate2::write::GzDecoder;
+use flate2::write::GzEncoder;
+use tar::Archive;
+use tar::Builder;
+
+pub(crate) fn create_tarball(_tarball_path: &str, _input_files: &str) -> Result<(), String> {
+    // Prepare to build an archive
+    let mut buf: Vec<u8> = Vec::new();
+    let mut output = Builder::new(&mut buf);
+    let input = Path::new(_input_files);
+
+    // Recursively add files, breaking gracefully
+    match output.append_dir_all(input.file_name().unwrap(), input) {
+        Ok(()) => (),
+        Err(issue) => return Err(format!("Failed to build archive from input path recursively <- {}", issue))
+    };
+
+    // Finish the tar procedure
+    match output.into_inner() {
+        Ok(_x) => (),
+        Err(issue) => return Err(format!("Failed to finish writing archive to buffer <- {}", issue))
+    };
+
+    // Compress the archive/buffer/vector to a file. Buffer implicitly cast/sliced to &[u8]
+    let mut gzip = GzEncoder::new(OpenOptions::new().create(true).write(true).open(_tarball_path).unwrap(), Compression::best());
+    match gzip.write_all(&mut buf) {
+        Ok(()) => (),
+        Err(issue) => return Err(format!("Failed to write Gzip <- {}", issue))
+    };
+
+    // Close up shop and gfto
+    match gzip.try_finish() {
+        Ok(()) => (),
+        Err(issue) => return Err(format!("Failed to finish gzip procedure <- {}", issue))
+    };
+
     Ok(())
 }
 
-pub(crate) fn unpack_tarball(tarball_path: &str, destination_path: &str) -> Result<(), Box<dyn Error>> {
-    // Ensure the tarball exists
-    let mut tarball = Archive::new(File::open(&tarball_path).unwrap());
-    tarball.unpack(&destination_path)?;
+pub(crate) fn unpack_tarball(tarball_path: &str, destination_path: &str) -> Result<(), String> {
+    // Prepare for gunzip
+    let mut filebuf: Vec<u8> = Vec::new();
+    let mut gzbuf: Vec<u8> = Vec::new();
+    let mut gunzip = GzDecoder::new(&mut gzbuf);
+
+    // Load the file into its buffer
+    match File::open(tarball_path).unwrap().read_to_end(&mut filebuf) {
+        Ok(_x) => (),
+        Err(issue) => return Err(format!("Failed to read archive <- {}", issue))
+    };
+
+    // Decompress the file into another buffer
+    match gunzip.write_all(&mut filebuf) {
+        Ok(()) => (),
+        Err(issue) => return Err(format!("Failed to unzip archive <- {}", issue))
+    };
+
+    // Finish the gunzip procedure
+    match gunzip.try_finish() {
+        Ok(()) => (),
+        Err(issue) => return Err(format!("Failed to finish gunzip procedure <- {}", issue))
+    };
+
+    // Desperation. TODO: see if this sucks
+    drop(gunzip);
+
+    // Unroll the archive into a directory
+    let mut tarball = Archive::new((&mut gzbuf).as_slice());
+    match tarball.unpack(destination_path) {
+        Ok(()) => (),
+        Err(issue) => return Err(format!("Failed to unpack tar buffer into directory <- {}", issue))
+    };
+
     Ok(())
 }
 
