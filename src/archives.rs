@@ -26,11 +26,11 @@ use flate2::write::GzEncoder;
 use tar::Archive;
 use tar::Builder;
 
-pub(crate) fn create_tarball(_tarball_path: &str, _input_files: &str) -> Result<(), String> {
+pub(crate) fn create_tarball(tarball_path: &str, input_files: &str) -> Result<(), String> {
     // Prepare to build an archive
     let mut buf: Vec<u8> = Vec::new();
     let mut output = Builder::new(&mut buf);
-    let input = Path::new(_input_files);
+    let input = Path::new(input_files);
 
     // Recursively add files, breaking gracefully
     match output.append_dir_all(input.file_name().unwrap(), input) {
@@ -45,7 +45,7 @@ pub(crate) fn create_tarball(_tarball_path: &str, _input_files: &str) -> Result<
     };
 
     // Compress the archive/buffer/vector to a file. Buffer implicitly cast/sliced to &[u8]
-    let mut gzip = GzEncoder::new(OpenOptions::new().create(true).write(true).open(_tarball_path).unwrap(), Compression::best());
+    let mut gzip = GzEncoder::new(OpenOptions::new().create(true).write(true).open(tarball_path).unwrap(), Compression::best());
     match gzip.write_all(&mut buf) {
         Ok(()) => (),
         Err(issue) => return Err(format!("Failed to write Gzip <- {}", issue))
